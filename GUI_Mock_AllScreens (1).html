@@ -260,6 +260,9 @@
   .libToggle{margin-left:auto;align-self:flex-start;display:flex;border:1px solid var(--border);border-radius:.7cqw;overflow:hidden}
   .libToggle .lt{padding:.7cqh 1.2cqw;font-size:max(10px,1.05cqw);color:var(--text2);cursor:pointer}
   .libToggle .lt.sel{background:var(--accent);color:#03191c}
+  .libTypeTabs{display:flex;align-items:center;gap:.45cqw;color:var(--text2);font-size:max(12px,1.25cqw)}
+  .libTypeTabs button{background:transparent;border:0;color:var(--text2);font:inherit;padding:0;cursor:pointer}
+  .libTypeTabs button:hover,.libTypeTabs button.sel{color:var(--text);font-weight:600}
   .stCard .pv{display:none;width:100%;height:100%;flex-direction:column;align-items:center;justify-content:center;gap:.5cqh;background:#13201a;color:var(--sel)}
   .stCard .pv svg{width:4cqw;height:4cqw}
   .stCard .pv span{font-size:max(9px,.9cqw);color:var(--text2)}
@@ -278,6 +281,7 @@
   .mb:hover{background:rgba(33,190,43,.22)}
   .mb.na{color:#46505a;border-color:#333b42;cursor:default}
   .mb.na:hover{background:rgba(12,16,19,.62)}
+  .mb.sel{background:rgba(110,116,122,.55);color:#e6e9eb;border-color:#8a9098}
   .stCard[data-mode="xray"] .mb[data-m="xray"],.stCard[data-mode="photo"] .mb[data-m="photo"],.stCard[data-mode="video"] .mb[data-m="video"]{background:rgba(110,116,122,.55);color:#e6e9eb;border-color:#8a9098;cursor:default}
 
   /* ============ NEW TASK ============ */
@@ -1023,58 +1027,75 @@ const playSvg='<svg viewBox="0 0 24 24" fill="none" stroke="var(--accent)" strok
 const nowHM=()=>{const d=new Date(),p=n=>String(n).padStart(2,'0');return p(d.getHours())+':'+p(d.getMinutes());};
 const records=[
   {name:'Bobby',species:'Canine',breed:'Labrador',sex:'Male',dob:'2021-03-12',owner:'J. Smith',weight:'28 kg',
-   studies:[{part:'Chest',view:'Lateral',date:'2026-06-27',time:'14:12',kv:66,mas:6.3,photo:true,video:true},{part:'Chest',view:'VD',date:'2026-06-27',time:'14:08',kv:66,mas:6.3,photo:true}]},
+   studies:[{part:'Thorax',view:'Lateral',date:'2026-06-27',time:'14:12',kv:66,mas:6.3,photo:true,video:true},{part:'Chest',view:'VD',date:'2026-06-27',time:'14:12',kv:66,mas:6.3,photo:true}]},
   {name:'Luna',species:'Feline',breed:'Domestic SH',sex:'Female',dob:'2023-01-05',owner:'A. Lee',weight:'4.2 kg',
    studies:[{part:'Pelvis',view:'VD',date:'2026-06-26',time:'15:40',kv:55,mas:4.0,photo:true}]},
   {name:'Max',species:'Canine',breed:'Beagle',sex:'Male',dob:'2020-07-21',owner:'R. Gomez',weight:'14 kg',
    studies:[{part:'Forelimb',view:'Lateral',date:'2026-06-26',time:'11:20',kv:60,mas:5.0,photo:true}]},
   {name:'Daisy',species:'Canine',breed:'Poodle',sex:'Female',dob:'2019-11-02',owner:'K. Park',weight:'9 kg',
-   studies:[{part:'Abdomen',view:'Lateral',date:'2026-06-25',time:'09:35',kv:70,mas:8.0,photo:true},{part:'Abdomen',view:'VD',date:'2026-06-25',time:'09:30',kv:70,mas:8.0}]},
+   studies:[{part:'Abdomen',view:'Lateral',date:'2026-06-25',time:'09:35',kv:70,mas:8.0,photo:true},{part:'Abdomen',view:'VD',date:'2026-06-25',time:'09:35',kv:70,mas:8.0}]},
   {name:'Coco',species:'Avian',breed:'Cockatiel',sex:'Female',dob:'2024-02-20',owner:'M. Tan',weight:'0.1 kg',
    studies:[{part:'Whole body',view:'VD',date:'2026-06-24',time:'16:05',kv:45,mas:2.0,photo:true}]},
 ];
-let libSel=0,libMode='xray';
+let libSel=0,libMode='radiograph';
 function renderLibList(){
   document.getElementById('libList').innerHTML=records.map((r,i)=>
-    `<div class="libItem ${i===libSel?'sel':''}" onclick="selectLib(${i})"><div class="libAvatar">${pawSvg}</div>
-      <div><b>${r.name}</b><small>${r.species} · ${r.studies.length} studies</small></div></div>`).join('');
+    '<div class="libItem '+(i===libSel?'sel':'')+'" onclick="selectLib('+i+')"><div class="libAvatar">'+pawSvg+'</div>'+
+      '<div><b>'+r.name+'</b><small>'+r.species+' &middot; '+r.studies.length+' studies</small></div></div>').join('');
 }
 function selectLib(i){libSel=i;libSelectedPart='';renderLibList();renderLibDetail();}
-/* each acquisition = ONE box holding both the radiograph and the simultaneous photo;
-   per-box data-mode picks which is shown. Single-click toggles the box; double-click opens it. */
+function setLibFilter(mode){libMode=mode;renderLibDetail();}
+function studyHasMode(s,mode){
+  if(mode==='radiograph')return true;
+  if(mode==='photo')return !!s.photo;
+  if(mode==='video')return !!s.video;
+  return true;
+}
+function exposureLine(s){
+  if(s.kv==null||s.mas==null)return libMode==='photo'?'Photo record':'Video record';
+  return s.kv+' kV &middot; '+s.mas+' mAs';
+}
+function mediaButtons(s){
+  return '<button class="mb'+(libMode==='radiograph'?' sel':'')+'" data-m="radiograph" data-av="1" title="Radiography" onclick="event.stopPropagation();setLibFilter(&quot;radiograph&quot;)">R</button>'+
+    '<button class="mb'+(s.photo?'':' na')+(libMode==='photo'?' sel':'')+'" data-m="photo" data-av="'+(s.photo?1:0)+'" title="Photography" onclick="event.stopPropagation();if('+ (s.photo?1:0) +')setLibFilter(&quot;photo&quot;)">P</button>'+
+    '<button class="mb'+(s.video?'':' na')+(libMode==='video'?' sel':'')+'" data-m="video" data-av="'+(s.video?1:0)+'" title="Video" onclick="event.stopPropagation();if('+ (s.video?1:0) +')setLibFilter(&quot;video&quot;)">V</button>';
+}
 function renderLibDetail(){
   const r=records[libSel];
-  let lastDate=null;
-  const studies=r.studies.map((s,i)=>{
-    let sep='';if(s.date!==lastDate){sep=`<div class="dateSep"><span>${s.date}${s.time?' · '+s.time:''}</span></div>`;lastDate=s.date;}
+  let lastGroup=null;
+  const visibleStudies=r.studies.filter(s=>studyHasMode(s,libMode));
+  const studies=visibleStudies.map((s)=>{
+    const group=s.date+(s.time?' &middot; '+s.time:'');
+    let sep='';if(group!==lastGroup){sep='<div class="dateSep"><span>'+group+'</span></div>';lastGroup=group;}
     if(s.pending){
-      return sep+`<div class="stCard pending" onclick="selectPendingBox(this,'${s.part}')" ondblclick="startFromLibrary('${s.part}')" title="Click to select · double-click to X-ray now">
-        <div class="stThumb empty"><span class="emptyTxt">No image yet</span></div>
-        <div class="stInfo"><b>${s.part}</b><small>${s.date}</small><small>Pending</small></div>
-        <div class="modeBtns"><button class="mb na" data-av="0">R</button><button class="mb na" data-av="0">P</button><button class="mb na" data-av="0">V</button></div></div>`;
+      return sep+'<div class="stCard pending" onclick="selectPendingBox(this,&quot;'+s.part+'&quot;)" ondblclick="startFromLibrary(&quot;'+s.part+'&quot;)" title="Click to select - double-click to X-ray now">'+
+        '<div class="stThumb empty"><span class="emptyTxt">No image yet</span></div>'+
+        '<div class="stInfo"><b>'+s.part+'</b><small>'+s.date+'</small><small>Pending</small></div>'+
+        '<div class="modeBtns"><button class="mb na" data-av="0">R</button><button class="mb na" data-av="0">P</button><button class="mb na" data-av="0">V</button></div></div>';
     }
     const cls=s.unlabeled?'stCard unlabeled':'stCard';
-    const dbl=s.unlabeled?'startLabelingFromLib()':('openLibImage('+i+')');
-    return sep+`<div class="${cls}" data-mode="xray" ondblclick="${dbl}" title="${s.unlabeled?'Unlabeled — double-click to label':'Double-click to open'}">
-      <div class="stThumb"><img class="xv" src="${RADIO}" onerror="radioFail(this)"/>${filmFb}<div class="pv">${camSvg}<span>RGB photo</span></div><div class="vv">${playSvg}<span>Video</span></div></div>
-      <div class="stInfo"><b>${s.part}</b><small>${s.view} · ${s.date}</small><small>${s.kv} kV · ${s.mas} mAs</small></div>
-      <div class="modeBtns">
-        <button class="mb" data-m="xray" data-av="1" title="Radiography" onclick="event.stopPropagation();setStudyMode(this,'xray')">R</button>
-        <button class="mb${s.photo?'':' na'}" data-m="photo" data-av="${s.photo?1:0}" title="Photography" onclick="event.stopPropagation();setStudyMode(this,'photo')">P</button>
-        <button class="mb${s.video?'':' na'}" data-m="video" data-av="${s.video?1:0}" title="Video" onclick="event.stopPropagation();setStudyMode(this,'video')">V</button>
-      </div></div>`;
-  }).join('');
+    const idx=r.studies.indexOf(s);
+    const dbl=s.unlabeled?'startLabelingFromLib()':'openLibImage('+idx+')';
+    return sep+'<div class="'+cls+'" data-mode="'+libMode+'" ondblclick="'+dbl+'" title="'+(s.unlabeled?'Unlabeled - double-click to label':'Double-click to open')+'">'+
+      '<div class="stThumb"><img class="xv" src="'+RADIO+'" onerror="radioFail(this)"/>'+filmFb+'<div class="pv">'+camSvg+'<span>RGB photo</span></div><div class="vv">'+playSvg+'<span>Video</span></div></div>'+
+      '<div class="stInfo"><b>'+s.part+'</b><small>'+s.view+' &middot; '+s.date+'</small><small>'+exposureLine(s)+'</small></div>'+
+      '<div class="modeBtns">'+mediaButtons(s)+'</div></div>';
+  }).join('')||'<div style="grid-column:1/-1;color:var(--text2);font-size:max(11px,1.15cqw);padding:2cqh 0">No '+libMode+' studies.</div>';
   document.getElementById('libDetail').innerHTML=
-    `<div class="libInfo"><div class="big">${pawSvg}</div><div style="min-width:0"><div class="libName">${r.name}</div>
-      <div class="libMeta"><div><span>Species</span><b>${r.species}</b></div><div><span>Breed</span><b>${r.breed}</b></div>
-      <div><span>Sex</span><b>${r.sex}</b></div><div><span>Date of birth</span><b>${r.dob}</b></div>
-      <div><span>Owner</span><b>${r.owner}</b></div><div><span>Weight</span><b>${r.weight}</b></div>
-      <div><span>Studies</span><b>${r.studies.length}</b></div></div></div></div>
-     <div class="toolLbl" style="font-size:max(12px,1.25cqw)"><span>Studies — radiograph · photo · video</span></div>
-     <div class="libStudies">${studies}</div>`;
+    '<div class="libInfo"><div class="big">'+pawSvg+'</div><div style="min-width:0"><div class="libName">'+r.name+'</div>'+
+      '<div class="libMeta"><div><span>Species</span><b>'+r.species+'</b></div><div><span>Breed</span><b>'+r.breed+'</b></div>'+
+      '<div><span>Sex</span><b>'+r.sex+'</b></div><div><span>Date of birth</span><b>'+r.dob+'</b></div>'+
+      '<div><span>Owner</span><b>'+r.owner+'</b></div><div><span>Weight</span><b>'+r.weight+'</b></div>'+
+      '<div><span>Studies</span><b>'+r.studies.length+'</b></div></div></div></div>'+
+     '<div class="libTypeTabs"><span>Studies &mdash;</span>'+
+       '<button class="'+(libMode==='radiograph'?'sel':'')+'" onclick="setLibFilter(&quot;radiograph&quot;)">radiograph</button><span>&middot;</span>'+
+       '<button class="'+(libMode==='photo'?'sel':'')+'" onclick="setLibFilter(&quot;photo&quot;)">photo</button><span>&middot;</span>'+
+       '<button class="'+(libMode==='video'?'sel':'')+'" onclick="setLibFilter(&quot;video&quot;)">video</button></div>'+
+     '<div class="libStudies">'+studies+'</div>';
   const xfab=document.getElementById('libStartXray');if(xfab)xfab.style.display=r.studies.some(s=>s.pending)?'flex':'none';
 }
-function setStudyMode(btn,m){if(btn.dataset.av==='0')return;const c=btn.closest('.stCard');if(c)c.dataset.mode=m;}
+function setStudyMode(btn,m){if(btn.dataset.av==='0')return;setLibFilter(m==='xray'?'radiograph':m);}
+
 /* New visit: open Task Manager pre-filled with this animal, with a fresh empty worklist */
 const speciesDisp={Canine:'Dog',Feline:'Cat',Equine:'Horse',Lagomorph:'Rabbit',Avian:'Bird',Rodent:'Hamster',Reptile:'Reptile',Other:'Other'};
 function newVisit(){
