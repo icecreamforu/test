@@ -1,0 +1,1182 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Careray XCamera — Full GUI Mock (16:10)</title>
+<style>
+  :root{
+    --surface:#121618;--surfaceDeep:#000000;--panel:#1E1E24;--card:#1A1F22;
+    --text:#F0F4F8;--text2:#8A9098;--border:#2E2E36;--sel:#21BE2B;--accent:#90C9CF;--warn:#E6B23A;--danger:#E2504A;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#05080a;font-family:"Segoe UI","等线 Light",system-ui,Arial,sans-serif}
+  body.light{--surface:#EEF1F3;--surfaceDeep:#FFFFFF;--panel:#FFFFFF;--card:#F4F6F7;--text:#1A2024;--text2:#5A636B;--border:#D5D9DD;--accent:#1E8A93}
+  #stage{position:fixed;inset:0;display:flex;align-items:center;justify-content:center}
+  #screen{aspect-ratio:16/10;width:min(100vw,160vh);height:min(62.5vw,100vh);container-type:size;
+          display:flex;flex-direction:column;background:var(--surface);color:var(--text);box-shadow:0 0 0 1px #000;position:relative}
+
+  /* header */
+  #header{flex:0 0 8.3cqh;display:flex;align-items:center;padding:0 1.6cqw;z-index:20}
+  .logo{display:flex;align-items:center;gap:.7cqw;font-size:max(14px,1.85cqw);font-weight:600;letter-spacing:.5px;cursor:pointer}
+  .logo:hover .mark{filter:brightness(1.15)}
+  .logo:active .mark{transform:scale(.94)}
+  .logo .mark{width:2.4cqw;height:2.4cqw;border-radius:.5cqw;background:var(--sel);display:flex;align-items:center;justify-content:center;color:#04140a;font-weight:700;font-size:max(13px,1.2cqw)}
+  .logo small{font-size:max(10px,1cqw);color:var(--text2);font-weight:400}
+  #pageTitle{margin-left:1.6cqw;font-size:max(12px,1.25cqw);color:var(--text2);align-self:center}
+  .hdrRight{margin-left:auto;display:flex;align-items:center;gap:1.4cqw}
+  .stat{display:flex;align-items:center;gap:.4cqw;color:var(--text2);font-size:max(12px,1.25cqw)}
+  .stat svg{width:max(18px,1.8cqw);height:max(18px,1.8cqw)}
+  .batShell{width:3.2cqw;height:1.55cqw;border:.12cqw solid var(--text2);border-radius:.2cqw;position:relative;padding:.12cqw}
+  .batShell::after{content:"";position:absolute;right:-.3cqw;top:30%;width:.24cqw;height:40%;background:var(--text2)}
+  .batFill{height:100%;background:var(--sel);width:66%}
+  .clock{color:var(--text);font-size:max(14px,1.55cqw);font-variant-numeric:tabular-nums}
+  .dot{width:.72cqw;height:.72cqw;min-width:9px;min-height:9px;border-radius:50%;background:var(--danger);display:inline-block}
+  .dot.on{background:var(--sel)}
+
+  /* body */
+  #body{flex:1 1 auto;display:flex;min-height:0}
+  #leftMenu{flex:0 0 8cqw;display:flex;flex-direction:column;align-items:center;gap:1.1cqh;padding-top:1.4cqh;overflow:hidden}
+  .navBtn{width:6.2cqw;height:6.2cqw;border-radius:1cqw;background:var(--card);border:1px solid var(--border);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:.2cqh;cursor:pointer;color:var(--text2);transition:.12s;user-select:none}
+  .navBtn svg{width:2.5cqw;height:2.5cqw}
+  .navBtn span{font-size:max(9px,.82cqw)}
+  .navBtn:hover{border-color:var(--accent);color:var(--text)}
+  .navBtn.active{background:rgba(33,190,43,.14);border-color:var(--sel);color:var(--sel)}
+  #content{flex:1 1 auto;position:relative;min-width:0}
+  .screen{position:absolute;inset:0;display:none}
+  .screen.active{display:block}
+
+  /* generic */
+  .pill{padding:.4cqh 1cqw;border-radius:40px;font-size:max(11px,1cqw)}
+  .btn{background:var(--card);border:1px solid var(--border);color:var(--text);border-radius:.7cqw;cursor:pointer;font-size:max(11px,1.05cqw);padding:.8cqh 1cqw;display:inline-flex;align-items:center;gap:.4cqw}
+  .btn:hover{border-color:var(--accent)}
+  .btn.green{background:var(--sel);color:#04140a;border:none;font-weight:600}
+  .btn.accent{background:var(--accent);color:#03191c;border:none}
+  .field{background:var(--panel);border:1px solid var(--border);color:var(--text);border-radius:.7cqw;padding:.8cqh 1cqw;font-size:max(11px,1.05cqw)}
+
+  /* ============ HOME ============ */
+  #screen-home{display:none;flex-direction:column}
+  #screen-home.active{display:flex}
+  .homeCenter{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2.2cqh}
+  .homeBottom{display:flex;gap:1.6cqw;justify-content:center;padding-bottom:3.5cqh}
+  .homeSmall{width:17cqw;height:7cqh;background:var(--card);border:1px solid var(--border);border-radius:1cqw;
+             display:flex;align-items:center;justify-content:center;gap:.8cqw;cursor:pointer;color:var(--text2);transition:.12s}
+  .homeSmall:hover{border-color:var(--sel);color:var(--text)}
+  .homeSmall svg{width:2.2cqw;height:2.2cqw}
+  .homeSmall b{font-size:max(12px,1.3cqw);color:var(--text);font-weight:600}
+  .homeGrid{display:flex;gap:1.6cqw;flex-wrap:wrap;justify-content:center;max-width:78cqw}
+  .homeTile{width:18cqw;height:24cqh;background:var(--card);border:1px solid var(--border);border-radius:1.4cqw;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1.4cqh;cursor:pointer;color:var(--text2);transition:.12s}
+  .homeTile:hover{border-color:var(--sel);color:var(--text);transform:translateY(-.5cqh)}
+  .homeTile svg{width:5cqw;height:5cqw}
+  .homeTile b{font-size:max(14px,1.6cqw);color:var(--text);font-weight:600}
+  .homeTile span{font-size:max(11px,1.1cqw)}
+  #screen-home h1{font-size:max(12px,1.4cqw);font-weight:500;margin:0;color:var(--text2);letter-spacing:.5px}
+  .homeWide{width:36cqw;height:8cqh;background:var(--card);border:1px solid var(--border);border-radius:1.4cqw;display:flex;flex-direction:row;align-items:center;justify-content:center;gap:1.2cqw;cursor:pointer;color:var(--text2);transition:.12s}
+  .homeWide:hover{border-color:var(--sel);color:var(--text);transform:translateY(-.5cqh)}
+  .homeWide svg{width:3cqw;height:3cqw}
+  .homeWide b{font-size:max(13px,1.5cqw);color:var(--text);font-weight:600}
+  .homeWide span{font-size:max(10px,1.05cqw)}
+
+  /* ============ EXPOSURE ============ */
+  #screen-exposure.active{display:flex}
+  #screen-exposure{display:none}
+  #imageArea{flex:1 1 auto;position:relative;background:var(--surfaceDeep);overflow:hidden}
+  #expoLeft{flex:0 0 9.5cqw;display:flex;flex-direction:column;gap:1cqh;padding:1.2cqh .6cqw}
+  #expoRight{flex:0 0 13cqw;display:flex;flex-direction:column;gap:1cqh;padding:1.2cqh .7cqw}
+  .toolBtn{flex:1 1 0;min-height:0;border-radius:.9cqw;background:var(--card);border:1px solid var(--border);color:var(--text2);
+           display:flex;flex-direction:column;align-items:center;justify-content:center;gap:.4cqh;cursor:pointer;font-size:max(10px,1cqw);transition:.12s;user-select:none}
+  .toolBtn svg{width:2.6cqw;height:2.6cqw}
+  .toolBtn:hover{border-color:var(--accent);color:var(--text)}
+  .toolBtn.active{border-color:var(--sel);color:var(--sel);background:rgba(33,190,43,.14)}
+  #xray{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);height:94%;width:74%;display:flex;align-items:center;justify-content:center;filter:contrast(1.05)}
+  #xray img,#xray svg{width:100%;height:100%;object-fit:contain;opacity:.96}
+  #xray svg{display:none}
+  #colm{position:absolute;left:34%;top:13%;width:48%;height:70%;border:.2cqw solid var(--sel);box-shadow:0 0 0 100vmax rgba(0,0,0,.45)}
+  #ledBox{position:absolute;left:30%;top:11%;width:52%;height:74%;background:rgba(255,238,140,.14);border:.18cqw dashed rgba(255,233,120,.85);display:none;pointer-events:none}
+  #expoWorklist{position:absolute;right:1cqw;top:50%;transform:translateY(-50%);display:flex;flex-direction:column;gap:.8cqh;z-index:6}
+  .ewBtn{position:relative;width:5.5cqw;height:5.5cqw;border-radius:.9cqw;background:rgba(12,16,19,.66);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;color:var(--text2);cursor:pointer;transition:.12s}
+  .ewBtn svg{width:3cqw;height:3cqw}
+  .ewBtn:hover{border-color:var(--accent);color:var(--text)}
+  .ewBtn.active{border-color:var(--sel);color:var(--sel);background:rgba(33,190,43,.22)}
+  .ewBtn .cnt{position:absolute;top:-.5cqh;right:-.4cqw;min-width:2.2cqw;height:2.2cqw;border-radius:50%;background:var(--sel);color:#04140a;font-size:max(9px,1cqw);font-weight:700;display:flex;align-items:center;justify-content:center}
+  #exRec{position:absolute;left:1.4cqw;top:8%;display:none;align-items:center;gap:.6cqw;color:#ff5a5a;font-size:max(13px,1.5cqw);font-weight:600;z-index:6;text-shadow:0 1px 3px #000}
+  .recDot{width:1.4cqw;height:1.4cqw;border-radius:50%;background:#ff5a5a;animation:recblink 1s infinite}
+  @keyframes recblink{50%{opacity:.3}}
+  .toolBtn.rec{border-color:#ff5a5a;color:#ff5a5a;background:rgba(255,90,90,.16)}
+  .corner{position:absolute;width:2.4cqw;height:2.4cqw;border:.24cqw solid var(--accent)}
+  .corner.tl{left:-1px;top:-1px;border-right:none;border-bottom:none}.corner.tr{right:-1px;top:-1px;border-left:none;border-bottom:none}
+  .corner.bl{left:-1px;bottom:-1px;border-right:none;border-top:none}.corner.br{right:-1px;bottom:-1px;border-left:none;border-top:none}
+  #cross{position:absolute;inset:0;pointer-events:none}
+  #cross::before,#cross::after{content:"";position:absolute;background:rgba(144,201,207,.5)}
+  #cross::before{left:50%;top:0;width:1px;height:100%}#cross::after{top:50%;left:0;height:1px;width:100%}
+  .ovl{position:absolute;color:var(--accent);font-size:max(12px,1.35cqw);text-shadow:0 1px 3px #000;font-variant-numeric:tabular-nums}
+  #ovlParams{left:1.2cqw;bottom:6.5%;color:var(--text);font-size:max(14px,1.55cqw)}
+  #ovlSod{left:1.2cqw;bottom:3%}#ovlSid{left:13cqw;bottom:3%}#ovlTh{left:24cqw;bottom:3%}#ovlMode{right:1.4cqw;top:2.5%;color:var(--text2)}
+  #flash{position:absolute;inset:0;background:#fff;opacity:0;pointer-events:none;transition:opacity .12s}
+  #banner{position:absolute;left:50%;top:4%;transform:translateX(-50%);padding:.7cqh 2cqw;border-radius:40px;background:rgba(33,190,43,.16);color:var(--sel);font-size:max(14px,1.5cqw);border:1px solid var(--sel);display:none;white-space:nowrap}
+  #banner.warn{background:rgba(230,178,58,.16);color:var(--warn);border-color:var(--warn)}
+  .modeBar{display:flex;background:var(--card);border:1px solid var(--border);border-radius:.7cqw;overflow:hidden}
+  .modeBar div{flex:1;text-align:center;padding:.9cqh 0;font-size:max(10px,1.02cqw);color:var(--text2);cursor:pointer}
+  .modeBar div.sel{background:var(--sel);color:#04140a;font-weight:600}
+  .paramBox{background:var(--card);border:1px solid var(--border);border-radius:.9cqw;padding:.7cqh .4cqw;text-align:center}
+  .paramBox .lbl{font-size:max(12px,1.2cqw);color:var(--text2)}
+  .paramBox .val{font-size:max(22px,3.6cqw);line-height:1.05;font-weight:600;font-variant-numeric:tabular-nums}
+  .stepRow{display:flex;justify-content:space-between;margin-top:.6cqh;gap:.5cqw}
+  .step{flex:1;height:4.4cqh;border-radius:.7cqw;background:var(--panel);border:1px solid var(--border);color:var(--text);font-size:max(20px,2cqw);display:flex;align-items:center;justify-content:center;cursor:pointer;user-select:none}
+  .step:active{transform:scale(.96)}
+  .presets{display:flex;gap:.4cqw}
+  .presets div{flex:1;height:3.6cqh;border-radius:.6cqw;background:var(--card);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:max(14px,1.5cqw);color:var(--text2);cursor:pointer}
+  .presets div.sel{border-color:var(--accent);color:var(--accent);background:rgba(144,201,207,.12)}
+  #expoWrap{margin-top:auto;display:flex;flex-direction:column;align-items:center;gap:1cqh}
+  #ring{width:8.5cqw;height:8.5cqw}
+  #ring .bg{fill:none;stroke:var(--border);stroke-width:14}
+  #ring .fg{fill:none;stroke:var(--sel);stroke-width:14;stroke-linecap:round;stroke-dasharray:534;stroke-dashoffset:534;transition:stroke-dashoffset .25s}
+  #ringTxt{font-size:30px;fill:var(--text)}#ringSub{font-size:18px;fill:var(--text2)}
+  .bigBtn{width:100%;height:5.6cqh;border-radius:.8cqw;border:none;font-size:max(15px,1.4cqw);font-weight:600;cursor:pointer;color:#04140a;background:var(--sel)}
+  .bigBtn.idle{background:var(--card);color:var(--text2);border:1px solid var(--border)}
+
+  /* ============ DATABASE ============ */
+  #screen-database{display:none;flex-direction:column;padding:1.6cqh 1.6cqw;gap:1.4cqh}
+  #screen-database.active{display:flex}
+  .dbBar{display:flex;align-items:center;gap:1cqw}
+  .tabs{display:flex;background:var(--card);border:1px solid var(--border);border-radius:.7cqw;overflow:hidden}
+  .tabs div{padding:.9cqh 1.6cqw;font-size:max(11px,1.1cqw);color:var(--text2);cursor:pointer}
+  .tabs div.sel{background:var(--sel);color:#04140a;font-weight:600}
+  .grid{flex:1;display:grid;grid-template-columns:repeat(4,1fr);grid-auto-rows:min-content;gap:1.2cqw;overflow:hidden;align-content:start}
+  .dcard{background:var(--card);border:1px solid var(--border);border-radius:1cqw;overflow:hidden;cursor:pointer;transition:.12s;display:flex;flex-direction:column}
+  .dcard:hover{border-color:var(--accent);transform:translateY(-.4cqh)}
+  .dthumb{height:14cqh;background:#0c1013;display:flex;align-items:center;justify-content:center}
+  .dthumb svg{width:5cqw;height:5cqw;opacity:.5}
+  .dinfo{padding:.9cqh 1cqw}
+  .dinfo b{font-size:max(12px,1.25cqw);display:block}
+  .dinfo small{font-size:max(10px,1cqw);color:var(--text2);display:block;margin-top:.3cqh}
+  .statusPill{display:inline-block;margin-top:.6cqh;font-size:max(9px,.9cqw);padding:.25cqh .8cqw;border-radius:40px}
+  .s-pending{background:rgba(230,178,58,.18);color:var(--warn)}
+  .s-done{background:rgba(33,190,43,.18);color:var(--sel)}
+
+  /* ============ IMAGE DETAIL ============ */
+  #screen-image{display:none}
+  #screen-image.active{display:flex}
+  #detImg{flex:1 1 auto;position:relative;background:var(--surfaceDeep);overflow:hidden}
+  #detImg #xray2{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);height:92%;width:74%;filter:contrast(1.05)}
+  #detImg #xray2 img,#detImg #xray2 svg{width:100%;height:100%;object-fit:contain}
+  #detImg #xray2 svg{display:none}
+  #detLeft{flex:0 0 9.5cqw;display:flex;flex-direction:column;gap:1.2cqh;padding:1.4cqh .6cqw}
+  #detLeft .btn{width:100%;justify-content:center;height:8cqh;font-size:max(10px,1.05cqw)}
+  #detTools{flex:0 0 17cqw;display:flex;flex-direction:column;gap:1.1cqh;padding:1.4cqh .9cqw;overflow:hidden}
+  .toolLbl{font-size:max(11px,1.05cqw);color:var(--text2);display:flex;justify-content:space-between}
+  input[type=range]{-webkit-appearance:none;appearance:none;width:100%;height:3cqw;background:transparent;outline:none;--thumb:var(--text2)}
+  input[type=range]:focus,input[type=range]:active{--thumb:var(--sel)}
+  input[type=range]::-webkit-slider-runnable-track{height:.7cqh;background:var(--border);border-radius:40px}
+  input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:3cqw;height:3cqw;border-radius:50%;
+    background:radial-gradient(circle, var(--thumb) 0 30%, transparent 33% 60%, var(--thumb) 63% 100%);cursor:pointer;margin-top:calc((.7cqh - 3cqw) / 2)}
+  input[type=range]::-moz-range-track{height:.7cqh;background:var(--border);border-radius:40px}
+  input[type=range]::-moz-range-thumb{width:3cqw;height:3cqw;border:none;border-radius:50%;
+    background:radial-gradient(circle, var(--thumb) 0 30%, transparent 33% 60%, var(--thumb) 63% 100%);cursor:pointer}
+  .toolRow{display:flex;gap:.5cqw}
+  .toolRow .btn{flex:1;justify-content:center}
+  #hist{width:100%;height:11.25cqh;display:flex;align-items:flex-end;gap:1px;background:var(--panel);border:1px solid var(--border);border-radius:.6cqw;padding:.4cqh}
+  #flux{width:100%;height:11.25cqh;background:var(--panel);border:1px solid var(--border);border-radius:.6cqw}
+  #hist i{flex:1;background:var(--accent);opacity:.7;display:block}
+  .detOvl{position:absolute;left:1.2cqw;color:var(--text);font-size:max(13px,1.4cqw);text-shadow:0 1px 3px #000}
+  .detArrow{position:absolute;top:50%;transform:translateY(-50%);width:5cqw;height:5cqw;border-radius:50%;background:rgba(12,16,19,.6);border:1px solid var(--border);display:none;align-items:center;justify-content:center;color:var(--text);cursor:pointer;z-index:7}
+  .detArrow:hover{border-color:var(--accent);color:var(--accent)}
+  .detArrow svg{width:2.8cqw;height:2.8cqw}
+  #detPrev{left:1.2cqw}#detNext{right:1.2cqw}
+  #imgInfo{position:absolute;top:0;left:0;right:0;display:flex;justify-content:space-between;padding:1.2cqh 1.6cqw;pointer-events:none;color:var(--text);text-shadow:0 1px 3px #000;font-size:max(11px,1.2cqw);font-variant-numeric:tabular-nums}
+  #imgInfo .ii-left,#imgInfo .ii-right{display:flex;flex-direction:column;gap:.25cqh}
+  #imgInfo .ii-right{text-align:right}
+  #imgInfo b{font-size:max(13px,1.5cqw);font-weight:600}
+  #imgInfo .ii-left span span,#imgInfo .ii-right span span{color:#fff}
+  #imgInfo .ii-right span,#imgInfo .ii-left span{color:var(--text2)}
+
+  /* ============ SETTINGS ============ */
+  #screen-settings{display:none}
+  #screen-settings.active{display:flex}
+  #setCats{flex:0 0 18cqw;border-right:1px solid var(--border);padding:1.4cqh 0;overflow:hidden}
+  .setCat{padding:1.2cqh 1.6cqw;font-size:max(12px,1.2cqw);color:var(--text2);cursor:pointer;border-left:3px solid transparent}
+  .setCat.sel{color:var(--text);border-left-color:var(--sel);background:var(--card)}
+  #setBody{flex:1;padding:1.8cqh 2cqw;overflow:hidden}
+  #setBody h2{font-size:max(15px,1.7cqw);margin:0 0 1.4cqh;font-weight:600}
+  .setRow{display:flex;align-items:center;justify-content:space-between;padding:1.2cqh 0;border-bottom:1px solid var(--border);font-size:max(12px,1.2cqw)}
+  .setRow .v{color:var(--text2)}
+  .sw{width:5cqw;height:2.6cqh;min-height:22px;border-radius:40px;background:var(--border);position:relative;cursor:pointer;transition:.15s}
+  .sw.on{background:var(--sel)}
+  .sw::after{content:"";position:absolute;top:8%;left:4%;height:84%;aspect-ratio:1;border-radius:50%;background:#fff;transition:.15s}
+  .sw.on::after{left:auto;right:4%}
+  .seg{display:flex;border:1px solid var(--border);border-radius:.6cqw;overflow:hidden}
+  .seg div{padding:.7cqh 1.4cqw;font-size:max(11px,1.05cqw);color:var(--text2);cursor:pointer}
+  .seg div.sel{background:var(--accent);color:#03191c}
+
+  /* ============ LIBRARY ============ */
+  #screen-library{display:none}
+  #screen-library.active{display:flex}
+  #libList{flex:0 0 24cqw;border-right:1px solid var(--border);overflow:hidden;display:flex;flex-direction:column;padding:1cqh 0}
+  .libItem{padding:1.1cqh 1.4cqw;cursor:pointer;border-left:3px solid transparent;display:flex;align-items:center;gap:1cqw}
+  .libItem.sel{background:var(--card);border-left-color:var(--sel)}
+  .libAvatar{width:3.6cqw;height:3.6cqw;border-radius:50%;background:var(--panel);display:flex;align-items:center;justify-content:center;color:var(--text2);flex:0 0 auto}
+  .libAvatar svg{width:2.1cqw;height:2.1cqw}
+  .libItem b{font-size:max(15px,1.7cqw);display:block}
+  .libItem small{font-size:max(11px,1.25cqw);color:var(--text2)}
+  #libDetail{flex:1;padding:1.6cqh 2cqw;overflow:hidden;display:flex;flex-direction:column;gap:1.3cqh;min-width:0}
+  .fab{position:absolute;right:2cqw;bottom:3cqh;width:5.6cqw;height:5.6cqw;border-radius:50%;background:var(--sel);color:#04140a;font-size:max(20px,3.4cqw);font-weight:600;display:flex;align-items:center;justify-content:center;cursor:pointer;z-index:8;box-shadow:0 .4cqh 1.4cqw rgba(0,0,0,.45)}
+  .fab:hover{filter:brightness(1.08)}
+  .fabE{right:9cqw;background:var(--card);border:1px solid var(--border);color:var(--text)}
+  .fabE:hover{border-color:var(--accent);color:var(--accent);filter:none}
+  #libNewVisit{background:var(--card);border:1px solid var(--border);color:var(--text)}
+  #libNewVisit:hover{border-color:var(--accent);color:var(--accent);filter:none}
+  .fabX{right:16cqw;background:var(--accent);color:#03191c;display:none}
+  .stThumb.empty{background:#0c1013;border:1px dashed #2a3036}
+  .stThumb.empty .emptyTxt{font-size:max(9px,.95cqw);color:#46505a}
+  .stCard.pending .stInfo b{color:#c5ccd2}
+  .stCard.pending.sel{border-color:var(--sel);box-shadow:0 0 0 .2cqw rgba(33,190,43,.35)}
+  .stCard.unlabeled{border-color:var(--warn)}
+  .stCard.unlabeled .stInfo b{color:var(--warn)}
+  .libInfo{display:flex;gap:1.6cqw;align-items:center}
+  .libInfo .big{width:6cqw;height:6cqw;border-radius:1cqw;background:var(--card);display:flex;align-items:center;justify-content:center;flex:0 0 auto}
+  .libInfo .big svg{width:3.4cqw;height:3.4cqw;color:var(--accent)}
+  .libName{font-size:max(16px,1.9cqw);font-weight:600;margin-bottom:.6cqh}
+  .libMeta{display:grid;grid-template-columns:repeat(4,auto);gap:.5cqh 2.2cqw;font-size:max(11px,1.1cqw)}
+  .libMeta span{color:var(--text2);font-size:max(9px,.95cqw)}
+  .libMeta b{font-weight:500;display:block}
+  .libStudies{flex:1;min-height:0;display:grid;grid-template-columns:repeat(4,1fr);gap:1.1cqw;align-content:start;overflow-y:auto;overflow-x:hidden;padding-right:.5cqw;padding-bottom:8cqh}
+  .libStudies::-webkit-scrollbar{width:.9cqw}
+  .libStudies::-webkit-scrollbar-thumb{background:var(--border);border-radius:40px}
+  .libStudies::-webkit-scrollbar-track{background:transparent}
+  .dateSep{grid-column:1/-1;display:flex;align-items:center;gap:1cqw;color:var(--text2);font-size:max(10px,1.1cqw);margin-top:.5cqh}
+  .dateSep span{white-space:nowrap}
+  .dateSep::after{content:"";flex:1;height:1px;background:var(--border)}
+  .stCard{position:relative;height:22cqh;background:var(--card);border:1px solid var(--border);border-radius:.9cqw;overflow:hidden;cursor:pointer;transition:.12s}
+  .stCard:hover{border-color:var(--accent);transform:translateY(-.4cqh)}
+  .stThumb{position:absolute;inset:0;background:#0c1013;display:flex;align-items:center;justify-content:center;overflow:hidden}
+  .stThumb img{width:100%;height:100%;object-fit:cover}
+  .stThumb svg{width:4cqw;height:4cqw;opacity:.55}
+  .stInfo{position:absolute;left:.9cqw;right:4.6cqw;bottom:.8cqh;z-index:3;text-shadow:0 1px 4px #000,0 0 2px #000}
+  .stInfo b{font-size:max(12px,1.5cqw);color:#fff;display:block;line-height:1.12}
+  .stInfo small{font-size:max(10px,1.1cqw);color:#e6ebef;display:block}
+  .badge{display:inline-block;margin-top:.5cqh;font-size:max(8px,.85cqw);padding:.2cqh .7cqw;border-radius:40px}
+  .b-xray{background:rgba(144,201,207,.16);color:var(--accent)}
+  .b-photo{background:rgba(33,190,43,.16);color:var(--sel)}
+  .libToggle{margin-left:auto;align-self:flex-start;display:flex;border:1px solid var(--border);border-radius:.7cqw;overflow:hidden}
+  .libToggle .lt{padding:.7cqh 1.2cqw;font-size:max(10px,1.05cqw);color:var(--text2);cursor:pointer}
+  .libToggle .lt.sel{background:var(--accent);color:#03191c}
+  .stCard .pv{display:none;width:100%;height:100%;flex-direction:column;align-items:center;justify-content:center;gap:.5cqh;background:#13201a;color:var(--sel)}
+  .stCard .pv svg{width:4cqw;height:4cqw}
+  .stCard .pv span{font-size:max(9px,.9cqw);color:var(--text2)}
+  .stCard[data-mode="photo"] .xv{display:none}
+  .stCard[data-mode="photo"] .stThumb>svg{display:none}
+  .stCard[data-mode="photo"] .pv{display:flex}
+  .stCard .vv{display:none;width:100%;height:100%;flex-direction:column;align-items:center;justify-content:center;gap:.5cqh;background:#181420;color:var(--accent)}
+  .stCard .vv svg{width:4cqw;height:4cqw}
+  .stCard .vv span{font-size:max(9px,.9cqw);color:var(--text2)}
+  .stCard[data-mode="video"] .xv{display:none}
+  .stCard[data-mode="video"] .stThumb>svg{display:none}
+  .stCard[data-mode="video"] .pv{display:none}
+  .stCard[data-mode="video"] .vv{display:flex}
+  .modeBtns{position:absolute;right:.6cqw;top:50%;transform:translateY(-50%);display:flex;flex-direction:column;gap:.7cqh;z-index:4}
+  .mb{width:2.8cqw;height:2.8cqw;border-radius:50%;border:1px solid var(--sel);background:rgba(12,16,19,.62);color:var(--sel);font-size:max(10px,1.1cqw);font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;flex:0 0 auto}
+  .mb:hover{background:rgba(33,190,43,.22)}
+  .mb.na{color:#46505a;border-color:#333b42;cursor:default}
+  .mb.na:hover{background:rgba(12,16,19,.62)}
+  .stCard[data-mode="xray"] .mb[data-m="xray"],.stCard[data-mode="photo"] .mb[data-m="photo"],.stCard[data-mode="video"] .mb[data-m="video"]{background:rgba(110,116,122,.55);color:#e6e9eb;border-color:#8a9098;cursor:default}
+
+  /* ============ NEW TASK ============ */
+  #screen-newtask{display:none}
+  #screen-newtask.active{display:flex}
+  .ntLeft{flex:0 0 27%;border-right:1px solid var(--border);padding:1.4cqh 1.2cqw;overflow:hidden;display:flex;flex-direction:column;gap:1cqh}
+  .ntLeft h2{font-size:max(13px,1.5cqw);margin:0;font-weight:600}
+  .ptFields{display:flex;flex-direction:column;gap:1cqh}
+  .ptFields .row2{display:grid;grid-template-columns:1fr 1fr;gap:.7cqw}
+  .ptFields .row3{display:grid;grid-template-columns:1.1fr 1.1fr .9fr;gap:.6cqw}
+  .idField{font-size:max(9px,.95cqw)!important;color:var(--text2);letter-spacing:.5px}
+  .ptFields.locked input,.ptFields.locked select{pointer-events:none;opacity:.7}
+  .ptFields.locked .seg2{pointer-events:none;opacity:.8}
+  .lockBtn{margin-top:auto;height:5.4cqh;border-radius:.8cqw;border:1px solid var(--border);background:var(--card);color:var(--text);display:flex;align-items:center;justify-content:center;gap:.7cqw;font-size:max(12px,1.3cqw);cursor:pointer}
+  .lockBtn svg{width:2.2cqw;height:2.2cqw}
+  .lockBtn.locked{border-color:var(--sel);color:var(--sel);background:rgba(33,190,43,.10)}
+  .lockBtn.unlocked{border-color:var(--warn);color:var(--warn);background:rgba(230,178,58,.10)}
+  .modal{position:absolute;inset:0;background:rgba(0,0,0,.55);display:none;align-items:center;justify-content:center;z-index:70}
+  .modal.show{display:flex}
+  .modalCard{width:44cqw;background:var(--surface);border:1px solid var(--border);border-radius:1.2cqw;padding:2.6cqh 2.4cqw;display:flex;flex-direction:column;gap:1.6cqh}
+  .mTitle{font-size:max(15px,1.7cqw);font-weight:600}
+  .mBody{font-size:max(12px,1.3cqw);color:var(--text2)}
+  .mFoot{display:flex;justify-content:flex-end;gap:1cqw}
+  .lockRow{margin-top:auto;display:flex;align-items:center;gap:.8cqw}
+  .lockStatus{display:flex;align-items:center;justify-content:center;width:4.6cqh;height:4.6cqh;border-radius:.7cqw;border:1px solid var(--border)}
+  .lockStatus svg{width:2.4cqw;height:2.4cqw}
+  .lockStatus.locked{color:var(--sel);border-color:var(--sel);background:rgba(33,190,43,.12)}
+  .lockStatus.unlocked{color:var(--warn);border-color:var(--warn);background:rgba(230,178,58,.12)}
+  .lockBtn2{flex:1;height:4.6cqh;border-radius:.7cqw;border:none;background:var(--sel);color:#04140a;font-weight:700;font-size:max(10px,1.05cqw);text-transform:uppercase;letter-spacing:.6px;cursor:pointer;white-space:nowrap}
+  #bodyControls{display:none;align-items:center;justify-content:space-between;gap:1cqw}
+  #bodyControls.show{display:flex}
+  .flipBtn{width:5cqw;height:5cqw;border-radius:.8cqw;background:var(--card);border:1px solid var(--border);color:var(--text2);display:flex;align-items:center;justify-content:center;cursor:pointer}
+  .flipBtn.on{border-color:var(--sel);color:var(--sel)}
+  .flipBtn svg{width:2.6cqw;height:2.6cqw}
+  .ctrGroup{display:flex;align-items:center;gap:1cqw}
+  .ctrGroup b{font-size:max(20px,3cqw);min-width:3cqw;text-align:center;color:var(--text);font-variant-numeric:tabular-nums}
+  #animalBody svg{transition:transform .15s}
+  #animalBody.flipped svg{transform:scaleX(-1)}
+  .region.active{stroke-width:3;fill:rgba(33,190,43,.45);stroke:var(--sel)}
+  .chipRow{flex:1;display:flex;align-items:center;gap:1cqw;overflow-x:auto;overflow-y:hidden}
+  .wlBox{position:relative;width:8cqw;height:8cqw;border-radius:1cqw;background:var(--card);border:1px solid var(--border);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:.2cqh;cursor:pointer;flex:0 0 auto}
+  .wlBox:hover{border-color:var(--text2)}
+  .wlBox svg{width:3.4cqw;height:3.4cqw;color:var(--text2)}
+  .wlBox .lbl{font-size:max(8px,.8cqw);color:var(--text2);line-height:1}
+  .wlBox .cnt{position:absolute;top:.3cqh;right:.3cqw;min-width:2.2cqw;height:2.2cqw;border-radius:50%;background:var(--text2);color:#04140a;font-size:max(9px,1.05cqw);font-weight:700;display:flex;align-items:center;justify-content:center;padding:0 .3cqw}
+  .wlBox.active{border-color:var(--sel);background:rgba(33,190,43,.18);box-shadow:0 0 0 .25cqw rgba(33,190,43,.4)}
+  .wlBox.active svg{color:var(--sel)}
+  .wlBox.active .lbl{color:var(--sel)}
+  .wlBox.active .cnt{background:var(--sel)}
+  .ntRight{flex:1;display:flex;flex-direction:column;min-width:0}
+  .ntImages{flex:5;padding:1.6cqh 1.6cqw;overflow:hidden;display:flex;flex-direction:column;gap:1.1cqh;min-height:0}
+  .ntImages .toolLbl{font-size:max(12px,1.3cqw)}
+  .animalGrid{flex:1;display:grid;grid-template-columns:repeat(4,1fr);gap:1cqw;min-height:0}
+  .animalCard{background:var(--card);border:1px solid var(--border);border-radius:1cqw;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:.5cqh;cursor:pointer;color:var(--text2);transition:.12s}
+  .animalCard:hover{border-color:var(--accent);color:var(--text)}
+  .animalCard.sel{border-color:var(--sel);background:rgba(33,190,43,.12);color:var(--text)}
+  .animalCard .emo{font-size:max(26px,4.2cqw);line-height:1}
+  .animalCard b{font-size:max(11px,1.05cqw);font-weight:500}
+  #animalBody{display:none;flex:1;min-height:0;align-items:center;justify-content:center;padding:.6cqh 0}
+  #animalBody.show{display:flex}
+  #animalBody svg{width:100%;height:100%}
+  .region{fill:rgba(144,201,207,.10);stroke:var(--accent);stroke-width:1.1;vector-effect:non-scaling-stroke;stroke-dasharray:4 3;cursor:pointer;transition:.1s}
+  .region:hover{fill:rgba(144,201,207,.24)}
+  .region.sel{fill:rgba(230,115,160,.32);stroke:#E673A0}
+  .ntStart{margin-top:auto;height:5.4cqh;border-radius:.8cqw;background:var(--sel);color:#04140a;font-weight:600;border:none;font-size:max(13px,1.4cqw);cursor:pointer}
+  .ntBottom{flex:1;border-top:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;padding:0 2.4cqw;min-height:0}
+  .counter{display:flex;align-items:center;gap:1.1cqw;font-size:max(12px,1.3cqw);color:var(--text2)}
+  .counter b{font-size:max(16px,2.1cqw);color:var(--text);min-width:2.4cqw;text-align:center}
+  .cbtn{width:4cqw;height:4cqw;border-radius:.7cqw;background:var(--panel);border:1px solid var(--border);color:var(--text);display:flex;align-items:center;justify-content:center;font-size:max(18px,2.2cqw);cursor:pointer;user-select:none}
+  .cbtn:active{transform:scale(.94)}
+  .backBtn{width:5.6cqw;height:5.6cqw;border-radius:50%;background:var(--card);border:1px solid var(--border);color:var(--text2);display:flex;align-items:center;justify-content:center;cursor:pointer}
+  .backBtn:hover{border-color:var(--sel);color:var(--sel)}
+  .backBtn svg{width:2.8cqw;height:2.8cqw}
+  .ntActions{display:flex;align-items:center;gap:1cqw}
+  .assignBox{display:flex;align-items:center;gap:1cqw;height:100%;padding:.4cqh .6cqw}
+  .assignBox img{width:8cqw;height:8cqw;border-radius:1cqw;object-fit:cover;border:1px solid var(--sel)}
+  .assignBox span{font-size:max(11px,1.25cqw);color:var(--sel)}
+  .lblBox{position:relative;width:8cqw;height:8cqw;border-radius:1cqw;overflow:hidden;border:1px solid var(--warn);cursor:pointer;flex:0 0 auto}
+  .lblBox.sel{border-color:var(--sel);box-shadow:0 0 0 .25cqw rgba(33,190,43,.4)}
+  .lblBox img{width:100%;height:100%;object-fit:cover}
+  .lblBox .lblP{position:absolute;left:0;right:0;bottom:0;background:rgba(0,0,0,.55);color:#fff;font-size:max(7px,.78cqw);text-align:center;padding:.1cqh .2cqw;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .saveBtn{background:var(--accent);color:#03191c;border-color:var(--accent)}
+  .saveBtn:hover{filter:brightness(1.1);border-color:var(--accent);color:#03191c}
+  .xBtn{border-color:var(--sel);color:var(--sel);background:rgba(33,190,43,.12)}
+  .formGrid{display:grid;grid-template-columns:repeat(3,1fr);gap:1.4cqh 1.6cqw}
+  .fld{display:flex;flex-direction:column;gap:.5cqh}
+  .fld label{font-size:max(10px,1.05cqw);color:var(--text2)}
+  .fld .field,.fld select{width:100%}
+  select.field{appearance:none;-webkit-appearance:none}
+  .seg2{display:flex;border:1px solid var(--border);border-radius:.6cqw;overflow:hidden}
+  .seg2 div{flex:1;text-align:center;padding:.85cqh 0;font-size:max(10px,1.05cqw);color:var(--text2);cursor:pointer}
+  .seg2 div.sel{background:var(--accent);color:#03191c}
+  .ntFoot{margin-top:auto;display:flex;gap:1cqw;justify-content:flex-end}
+
+  /* mock chrome */
+  #toast{position:fixed;left:50%;top:12%;transform:translateX(-50%);background:#11161a;border:1px solid var(--sel);color:var(--sel);padding:12px 28px;border-radius:40px;font-size:16px;display:none;z-index:60}
+  #hint{position:fixed;left:50%;bottom:8px;transform:translateX(-50%);color:#6a7178;font-size:12px;background:#0c1013;border:1px solid #1c2226;border-radius:20px;padding:5px 14px;z-index:50}
+</style>
+</head>
+<body>
+<div id="stage"><div id="screen">
+
+  <!-- HEADER -->
+  <div id="header">
+    <div class="logo" onclick="go('home')" title="Home"><span class="mark">C</span>Careray AIR.3 <small>XCamera V2.0</small></div>
+    <div id="pageTitle">Home</div>
+    <div class="hdrRight">
+      <div class="stat" title="Detector"><span class="dot on" id="detDot"></span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M7 9v6M12 9v6M17 9v6"/></svg></div>
+      <div class="stat" title="Wi-Fi"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M5 12.5a10 10 0 0 1 14 0"/><path d="M8.5 16a5 5 0 0 1 7 0"/><circle cx="12" cy="19" r="1.2" fill="currentColor" stroke="none"/></svg></div>
+      <div class="stat" title="Temp"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M10 13V5a2 2 0 1 1 4 0v8a4 4 0 1 1-4 0z"/></svg><span>32°C</span></div>
+      <div class="stat"><div class="batShell"><div class="batFill"></div></div><span>66%</span></div>
+      <div class="clock" id="clock">2026-06-28 14:30</div>
+    </div>
+  </div>
+
+  <!-- BODY -->
+  <div id="body">
+    <div id="content">
+
+      <!-- HOME -->
+      <div class="screen active" id="screen-home">
+        <div class="homeCenter">
+          <h1>AIR.3 - Xcamera For Animal Lovers</h1>
+          <div class="homeGrid">
+            <div class="homeTile" onclick="newTask()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4"><circle cx="12" cy="12" r="9"/><path d="M12 8v8M8 12h8"/></svg><b>New</b><span>New patient / study</span></div>
+            <div class="homeTile" onclick="quickX()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M13 3L5 13h5l-1 8 9-12h-6z"/></svg><b>Quick X</b><span>Start exposure now</span></div>
+            <div class="homeTile" onclick="go('library')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 15l5-4 4 3 3-2 6 4"/></svg><b>Library</b><span>Animal records</span></div>
+            <div class="homeTile" onclick="doSync()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M20 11a8 8 0 1 0-2 5"/><path d="M20 5v6h-6"/></svg><b>Sync</b><span>Upload to server</span></div>
+          </div>
+        </div>
+        <div class="homeBottom">
+          <div class="homeSmall" onclick="doService()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14.7 6.3a4 4 0 0 0-5.4 5.4L3 18l3 3 6.3-6.3a4 4 0 0 0 5.4-5.4l-2.6 2.6-2.4-.6-.6-2.4z"/></svg><b>Service</b></div>
+          <div class="homeSmall" onclick="go('settings')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="3"/><path d="M12 3v3M12 18v3M3 12h3M18 12h3M5 5l2 2M17 17l2 2M19 5l-2 2M7 17l-2 2"/></svg><b>Setting</b></div>
+        </div>
+      </div>
+
+      <!-- EXPOSURE -->
+      <div class="screen" id="screen-exposure">
+        <div id="expoLeft">
+          <div class="toolBtn" id="exLedBtn" onclick="exLed()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M9 18h6M10 21h4"/><path d="M12 3a6 6 0 0 1 4 10.5c-.7.6-1 1.2-1 2H9c0-.8-.3-1.4-1-2A6 6 0 0 1 12 3z"/></svg><span>LED field</span></div>
+          <div class="toolBtn" id="exPhotoBtn" onclick="exPhoto()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="7" width="18" height="13" rx="2"/><circle cx="12" cy="13.5" r="3.5"/><path d="M8 7l1.5-2h5L16 7"/></svg><span>Photo</span></div>
+          <div class="toolBtn" id="exVideoBtn" onclick="exVideo()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="7" width="13" height="10" rx="2"/><path d="M16 10l5-3v10l-5-3z"/></svg><span>Video</span></div>
+          <div class="toolBtn" id="exMeasBtn" onclick="exMeasure()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M12 2l8 4.5v9L12 20l-8-4.5v-9z"/><path d="M12 2v18M4 6.5l8 4.5 8-4.5"/></svg><span>3D Scan</span></div>
+          <div class="toolBtn active" id="exFieldBtn" onclick="exField()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M6 2v14a2 2 0 0 0 2 2h14M2 6h14a2 2 0 0 1 2 2v14"/></svg><span>Field</span></div>
+        </div>
+        <div id="imageArea">
+          <div id="xray">
+            <img src="Hand.png" alt="radiograph" onerror="radioFail(this)"/>
+            <svg viewBox="0 0 300 360"><g fill="#c9d3d8" stroke="#9fb0b8" stroke-width="1"><ellipse cx="150" cy="60" rx="44" ry="52"/><rect x="120" y="108" width="60" height="26" rx="10"/><path d="M95 140 q55 -22 110 0 l14 120 q-69 26 -138 0 z"/><g stroke="#7f9098" stroke-width="6" stroke-linecap="round" fill="none" opacity=".8"><path d="M150 150 V250"/><path d="M112 165 q-20 50 -8 95"/><path d="M188 165 q20 50 8 95"/><path d="M124 175 q-14 50 -6 90"/><path d="M176 175 q14 50 6 90"/></g></g></svg>
+          </div>
+          <div id="colm"><div class="corner tl"></div><div class="corner tr"></div><div class="corner bl"></div><div class="corner br"></div></div>
+          <div id="ledBox"></div>
+          <div id="cross"></div><div id="flash"></div><div id="banner"></div>
+          <div class="ovl" id="expoTarget" style="left:1.4cqw;top:2.5%;color:var(--sel)"></div>
+          <div id="exRec"><span class="recDot"></span>REC</div>
+          <div id="expoWorklist"></div>
+          <div class="ovl" id="ovlMode">DAEC</div><div class="ovl" id="ovlParams">60 kV · 6.3 mAs</div>
+          <div class="ovl" id="ovlSod">SOD 1050 mm</div><div class="ovl" id="ovlSid">SID 1100 mm</div><div class="ovl" id="ovlTh">TH 180 mm</div>
+        </div>
+        <div id="expoRight">
+          <div class="modeBar" id="modeBar"><div data-m="0">DAEC</div><div data-m="1" class="sel">mAs</div><div data-m="2">mA·ms</div></div>
+          <div class="paramBox"><div class="lbl">kV</div><div class="val" id="kvVal">60</div><div class="stepRow"><div class="step" onclick="stepKv(-1)">−</div><div class="step" onclick="stepKv(1)">+</div></div></div>
+          <div class="paramBox" id="masBox"><div class="lbl">mAs</div><div class="val" id="masVal">6.3</div><div class="stepRow"><div class="step" onclick="stepMas(-1)">−</div><div class="step" onclick="stepMas(1)">+</div></div></div>
+          <div class="presets" id="presets"><div data-p="1" class="sel">1</div><div data-p="2">2</div><div data-p="3">3</div><div data-p="4">4</div></div>
+          <div id="expoWrap">
+            <svg id="ring" viewBox="0 0 200 200"><circle class="bg" cx="100" cy="100" r="85"/><circle class="fg" id="ringFg" cx="100" cy="100" r="85" transform="rotate(-90 100 100)"/><text id="ringTxt" x="100" y="98" text-anchor="middle">Ready</text><text id="ringSub" x="100" y="124" text-anchor="middle">tap expose</text></svg>
+            <button class="bigBtn" id="expBtn" onclick="doExpose()">Expose</button>
+            <button class="bigBtn idle" onclick="go('library')">View Studies</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- DATABASE -->
+      <div class="screen" id="screen-database">
+        <div class="dbBar">
+          <div class="tabs" id="dbTabs"><div data-t="worklist" class="sel">Worklist</div><div data-t="history">History</div><div data-t="rgb">RGB</div></div>
+          <input class="field" id="dbSearch" placeholder="Search name / part" oninput="renderCards()" style="flex:1"/>
+          <button class="btn" onclick="cycleSort()"><span id="sortLbl">Sort: newest</span></button>
+          <button class="btn">Filter</button>
+          <button class="btn green">+ Add</button>
+        </div>
+        <div class="grid" id="dbGrid"></div>
+      </div>
+
+      <!-- IMAGE DETAIL -->
+      <div class="screen" id="screen-image">
+        <div id="detLeft">
+          <button class="btn" id="bInv" onclick="detInvert()">Invert</button>
+          <button class="btn" onclick="detRotate()">Rotate</button>
+          <button class="btn" id="bPost" onclick="toggleClass(this)">Enhance</button>
+          <button class="btn" id="bScat" onclick="toggleClass(this)">De-scatter</button>
+        </div>
+        <div id="detImg">
+          <div id="xray2"><img src="Hand.png" alt="radiograph" onerror="radioFail(this)"/><svg viewBox="0 0 300 360"><g fill="#d4dde2" stroke="#9fb0b8" stroke-width="1"><ellipse cx="150" cy="60" rx="44" ry="52"/><rect x="120" y="108" width="60" height="26" rx="10"/><path d="M95 140 q55 -22 110 0 l14 120 q-69 26 -138 0 z"/><g stroke="#7f9098" stroke-width="6" stroke-linecap="round" fill="none" opacity=".8"><path d="M150 150 V250"/><path d="M112 165 q-20 50 -8 95"/><path d="M188 165 q20 50 8 95"/></g></g></svg></div>
+          <div id="imgInfo">
+            <div class="ii-left"><b id="iiName">—</b><span>ID <span id="iiId">—</span></span><span><span id="iiSpecies">—</span> · <span id="iiSex">—</span> · <span id="iiAge">—</span></span></div>
+            <div class="ii-right"><b id="iiPart">—</b><span><span id="iiKv">—</span> kV</span><span><span id="iiMas">—</span> mAs</span></div>
+          </div>
+          <div class="detOvl" style="bottom:2cqh" id="detWWWL">WW 1200 · WL 600</div>
+          <div id="detBanner" style="position:absolute;left:50%;top:4%;transform:translateX(-50%);padding:.7cqh 2cqw;border-radius:40px;background:rgba(33,190,43,.16);color:var(--sel);border:1px solid var(--sel);font-size:max(13px,1.4cqw);display:none"></div>
+          <div id="detPrev" class="detArrow" onclick="libPrev()" title="Previous image"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 5l-7 7 7 7"/></svg></div>
+          <div id="detNext" class="detArrow" onclick="libNext()" title="Next image"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 5l7 7-7 7"/></svg></div>
+        </div>
+        <div id="detTools">
+          <div class="toolLbl" style="padding-bottom:.6cqh;border-bottom:1px solid var(--border)"><span>Post-processing</span><span style="color:var(--text2)">16-bit → 8-bit</span></div>
+          <div class="toolLbl"><span>Window width</span><span id="wwv">1200</span></div>
+          <input type="range" id="ww" min="100" max="4000" step="10" value="1200" oninput="updWWWL()"/>
+          <div class="toolLbl"><span>Window level</span><span id="wlv">600</span></div>
+          <input type="range" id="wl" min="-2000" max="4000" step="10" value="600" oninput="updWWWL()"/>
+          <div class="toolLbl" style="margin-top:2.6cqh"><span>Histogram (log)</span></div>
+          <div id="hist"></div>
+          <div class="toolLbl"><span>X-ray flux</span><span style="color:var(--text2)">µGy/s · t</span></div>
+          <svg id="flux" viewBox="0 0 100 40" preserveAspectRatio="none">
+            <polygon points="0,40 0,38 13,37 16,28 19,11 24,9 34,8 50,7 62,8 70,10 75,16 79,31 83,37 100,38 100,40" fill="var(--accent)" opacity="0.16"/>
+            <polyline points="0,38 13,37 16,28 19,11 24,9 34,8 50,7 62,8 70,10 75,16 79,31 83,37 100,38" fill="none" stroke="var(--accent)" stroke-width="1.4" vector-effect="non-scaling-stroke" stroke-linejoin="round"/>
+          </svg>
+          <div class="toolRow" style="margin-top:auto;align-items:center;justify-content:space-between"><div class="backBtn saveBtn" id="detSaveBtn" onclick="detSave()" title="Save"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M5 12l5 5 9-11"/></svg></div><div class="backBtn" onclick="reviewBack()" title="Back to previous page"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M15 5l-7 7 7 7"/></svg></div></div>
+        </div>
+      </div>
+
+      <!-- LIBRARY -->
+      <div class="screen" id="screen-library">
+        <div id="libList"></div>
+        <div id="libDetail"></div>
+        <div id="libStartXray" class="fab fabX" onclick="startWorklistFromLib()" title="Start X-ray for this worklist"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" style="width:3cqw;height:3cqw"><path d="M13 3L5 13h5l-1 8 9-12h-6z"/></svg></div>
+        <div id="libEdit" class="fab fabE" onclick="editStudies()" title="Edit studies / correct info"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" style="width:2.6cqw;height:2.6cqw"><path d="M4 20h4L20 8l-4-4L4 16z"/><path d="M14 6l4 4"/></svg></div>
+        <div id="libNewVisit" class="fab" onclick="newVisit()" title="New visit — start today's worklist for this animal">+</div>
+      </div>
+
+      <!-- NEW TASK -->
+      <div class="screen" id="screen-newtask">
+        <!-- Section 1: patient information (1/3 width, full height) -->
+        <div class="ntLeft">
+          <h2>Patient information</h2>
+          <div id="ptFields" class="ptFields">
+            <div class="fld"><label>Patient name</label><input class="field" id="ptName" placeholder="Bobby"/></div>
+            <div class="fld"><label>Patient ID — auto-created</label><input class="field idField" value="P-2026-0042" readonly/></div>
+            <div class="row3">
+              <div class="fld"><label>Species</label><input class="field" id="ntSpecies" placeholder="Canine"/></div>
+              <div class="fld"><label>Breed</label><input class="field" id="ptBreed" placeholder="Labrador"/></div>
+              <div class="fld"><label>Sex</label><div class="seg2"><div class="sel" onclick="seg(this)">M</div><div onclick="seg(this)">F</div></div></div>
+            </div>
+            <div class="fld"><label>Size</label><div class="seg2"><div onclick="seg(this)">S</div><div class="sel" onclick="seg(this)">M</div><div onclick="seg(this)">L</div><div onclick="seg(this)">XL</div></div></div>
+            <div class="row2">
+              <div class="fld"><label>Date of birth</label><input class="field" id="ptDob" placeholder="2022" oninput="ptAgeCalc()"/></div>
+              <div class="fld"><label>Age</label><input class="field" id="ptAge" value="—" readonly/></div>
+            </div>
+            <div class="fld"><label>Owner name</label><input class="field" id="ptOwner" placeholder="J. Smith"/></div>
+          </div>
+          <div class="lockRow">
+            <div class="lockStatus" id="lockStatus"></div>
+            <button class="lockBtn2" id="lockBtn" onclick="ntLockToggle()">Unlock</button>
+          </div>
+        </div>
+        <!-- Right 2/3 -->
+        <div class="ntRight">
+          <!-- top 5/6: cartoon animal selector -->
+          <div class="ntImages">
+            <div id="bodyControls">
+              <div class="flipBtn" id="flipBtn" onclick="bodyFlip()" title="Flip left / right side"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M12 3v18M7 8l-4 4 4 4M17 8l4 4-4 4"/></svg></div>
+              <div class="ctrGroup"><div class="cbtn" onclick="regCount(-1)">−</div><b id="regNum">0</b><div class="cbtn" onclick="regCount(1)">+</div></div>
+            </div>
+            <div class="toolLbl" id="gridLbl"><span id="ntImgTitle">Select species</span><span style="color:var(--text2)" id="ntImgSub">cartoon reference</span></div>
+            <div class="animalGrid" id="animalGrid">
+              <div class="animalCard sel" onclick="animalSel(this,'Canine')"><span class="emo">🐕</span><b>Dog</b></div>
+              <div class="animalCard" onclick="animalSel(this,'Feline')"><span class="emo">🐈</span><b>Cat</b></div>
+              <div class="animalCard" onclick="animalSel(this,'Equine')"><span class="emo">🐎</span><b>Horse</b></div>
+              <div class="animalCard" onclick="animalSel(this,'Lagomorph')"><span class="emo">🐇</span><b>Rabbit</b></div>
+              <div class="animalCard" onclick="animalSel(this,'Avian')"><span class="emo">🐦</span><b>Bird</b></div>
+              <div class="animalCard" onclick="animalSel(this,'Rodent')"><span class="emo">🐹</span><b>Hamster</b></div>
+              <div class="animalCard" onclick="animalSel(this,'Reptile')"><span class="emo">🦎</span><b>Reptile</b></div>
+              <div class="animalCard" onclick="animalSel(this,'Other')"><span class="emo">🐾</span><b>Other</b></div>
+            </div>
+            <div id="animalBody">
+              <svg viewBox="0 0 100 62">
+                <g fill="#8a99a1">
+                  <ellipse cx="46" cy="27" rx="27" ry="11"/>
+                  <circle cx="80" cy="19" r="8.5"/>
+                  <rect x="83" y="16.5" width="11" height="6" rx="3"/>
+                  <path d="M82 11 l3 -6 4 5 z"/>
+                  <path d="M20 24 q-10 -4 -13 2 q7 2 13 4 z"/>
+                  <rect x="28" y="35" width="5.5" height="17" rx="2.6"/>
+                  <rect x="38" y="35" width="5.5" height="17" rx="2.6"/>
+                  <rect x="58" y="35" width="5.5" height="17" rx="2.6"/>
+                  <rect x="67" y="35" width="5.5" height="17" rx="2.6"/>
+                </g>
+                <g>
+                  <circle class="region" data-r="Skull" cx="80" cy="19" r="9" onclick="bodySel('Skull',this)" ondblclick="bodyAdd('Skull',this)"/>
+                  <circle class="region" data-r="Thorax" cx="62" cy="26" r="9" onclick="bodySel('Thorax',this)" ondblclick="bodyAdd('Thorax',this)"/>
+                  <circle class="region" data-r="Abdomen" cx="44" cy="29" r="9" onclick="bodySel('Abdomen',this)" ondblclick="bodyAdd('Abdomen',this)"/>
+                  <circle class="region" data-r="Spine" cx="52" cy="18" r="6.5" onclick="bodySel('Spine',this)" ondblclick="bodyAdd('Spine',this)"/>
+                  <circle class="region" data-r="Pelvis" cx="28" cy="29" r="8" onclick="bodySel('Pelvis',this)" ondblclick="bodyAdd('Pelvis',this)"/>
+                  <circle class="region" data-r="Forelimb" cx="63" cy="45" r="7" onclick="bodySel('Forelimb',this)" ondblclick="bodyAdd('Forelimb',this)"/>
+                  <circle class="region" data-r="Hindlimb" cx="33" cy="45" r="7" onclick="bodySel('Hindlimb',this)" ondblclick="bodyAdd('Hindlimb',this)"/>
+                </g>
+              </svg>
+            </div>
+          </div>
+          <!-- bottom 1/6: counter + back button -->
+          <div class="ntBottom">
+            <div class="chipRow" id="chipRow"></div>
+            <div class="ntActions">
+              <div class="backBtn" onclick="ntBack()" title="Back to previous page"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M15 5l-7 7 7 7"/></svg></div>
+              <div class="backBtn xBtn" onclick="startExam()" title="Start X-ray"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M13 3L5 13h5l-1 8 9-12h-6z"/></svg></div>
+            </div>
+          </div>
+        </div>
+        <div id="ntModal" class="modal"><div class="modalCard">
+          <div class="mTitle">Confirm changes</div>
+          <div class="mBody">Save the edits to this patient record and lock it?</div>
+          <div class="mFoot"><button class="btn" onclick="ntCancel()">Cancel</button><button class="btn green" onclick="ntConfirm()">Confirm</button></div>
+        </div></div>
+      </div>
+
+      <!-- SETTINGS -->
+      <div class="screen" id="screen-settings">
+        <div id="setCats">
+          <div class="setCat sel" data-c="system">System</div>
+          <div class="setCat" data-c="generator">Generator</div>
+          <div class="setCat" data-c="detector">Detector</div>
+          <div class="setCat" data-c="camera">Camera</div>
+          <div class="setCat" data-c="collimator">Collimator</div>
+          <div class="setCat" data-c="general">General</div>
+          <div class="setCat" data-c="bluetooth">Bluetooth</div>
+        </div>
+        <div id="setBody"></div>
+      </div>
+
+    </div>
+  </div>
+
+</div></div>
+<div id="toast"></div>
+<div id="hint">Full GUI prototype · 16:10 landscape · tap the [C] logo (top-left) or swipe down from the top edge → Home</div>
+
+<script>
+/* clock */
+function tick(){const d=new Date(),p=n=>String(n).padStart(2,'0');
+  document.getElementById('clock').textContent=d.getFullYear()+'-'+p(d.getMonth()+1)+'-'+p(d.getDate())+' '+p(d.getHours())+':'+p(d.getMinutes());}
+tick();setInterval(tick,15000);
+
+/* router */
+const titles={home:'Home',exposure:'Exposure / Live preview',database:'Worklist',image:'Image detail',settings:'Settings',newtask:'Task Manager',library:'Library'};
+let curScreen='home',prevScreen='home';
+function seg(el){[...el.parentNode.children].forEach(c=>c.classList.toggle('sel',c===el));}
+let selectedSpecies='Canine',selectedSpeciesName='Dog',selectedRegion='';
+function animalSel(el,sp){[...el.parentNode.children].forEach(c=>c.classList.toggle('sel',c===el));
+  selectedSpecies=sp;selectedSpeciesName=el.querySelector('b').textContent;
+  const f=document.getElementById('ntSpecies');if(f)f.value=sp;}
+const regionCounts={};let activeRegion=null,bodyFlipped=false;
+/* click a body circle → make it the active region; the big number shows its current count */
+/* active part = GREEN (its body circle + its box); other worklist parts stay PINK; boxes default gray */
+function refreshActive(){
+  document.querySelectorAll('#animalBody .region').forEach(r=>r.classList.toggle('active',r.dataset.r===activeRegion));
+  document.querySelectorAll('#chipRow .wlBox').forEach(b=>b.classList.toggle('active',b.dataset.part===activeRegion));
+  const rn=document.getElementById('regNum');if(rn)rn.textContent=regionCounts[activeRegion]||0;}
+function bodySel(name,el){if(assignMode){assignShot(name);return;}activeRegion=name;refreshActive();}
+function selectPart(name){activeRegion=name;refreshActive();}
+/* +/- set how many radiographs to take of the active region */
+function regCount(d){if(!activeRegion)return;
+  let c=Math.max(0,Math.min(9,(regionCounts[activeRegion]||0)+d));
+  if(c===0)delete regionCounts[activeRegion];else regionCounts[activeRegion]=c;
+  const circ=document.querySelector('#animalBody .region[data-r="'+activeRegion+'"]');
+  if(circ)circ.classList.toggle('sel',c>0);
+  renderChips();refreshActive();}
+/* double-click a circle = add one image of that part to the worklist */
+function bodyAdd(name,el){if(assignMode){assignShot(name);return;}bodySel(name,el);regCount(1);}
+/* per-body-part icons shown in the worklist boxes */
+const regionIcons={
+ Skull:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="10" r="7"/><circle cx="9.5" cy="10" r="1.2" fill="currentColor" stroke="none"/><circle cx="14.5" cy="10" r="1.2" fill="currentColor" stroke="none"/><path d="M9 16.5h6V20H9z"/></svg>',
+ Thorax:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 4v16"/><path d="M12 8c-3 0-5 1-5.5 1.5M12 8c3 0 5 1 5.5 1.5M12 12c-3 0-5 1-5.5 1.5M12 12c3 0 5 1 5.5 1.5M12 16c-2.5 0-4 1-4.5 1.3M12 16c2.5 0 4 1 4.5 1.3"/></svg>',
+ Abdomen:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="6" y="6" width="12" height="12" rx="5.5"/><path d="M9 12h6"/></svg>',
+ Spine:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 3v18"/><path d="M9 6h6M9 9.5h6M9 13h6M9 16.5h6"/></svg>',
+ Pelvis:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 8c1.5 6 4.5 8 8 8s6.5-2 8-8"/><path d="M8 8v3.5M16 8v3.5M4 8h16"/></svg>',
+ Forelimb:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M8 5l8 14"/><circle cx="7" cy="4.5" r="1.6"/><circle cx="9.5" cy="6" r="1.6"/><circle cx="16.5" cy="18" r="1.6"/><circle cx="14" cy="19.5" r="1.6"/></svg>',
+ Hindlimb:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M10 4v7l-4 9"/><path d="M10 11l5 3 2 6"/></svg>'
+};
+/* worklist boxes in section 3: one box per part, count badge if >1, double-click → X-ray page */
+function renderChips(){const c0=document.getElementById('chipRow');if(!c0)return;
+  if(assignMode){const arec=records[libSel];
+    const list=editAllMode?(arec?arec.studies.slice():[]):(arec?arec.studies.filter(s=>s.unlabeled):[]);
+    if(list.length===0){c0.innerHTML='<span style="color:var(--text2);font-size:max(11px,1.2cqw)">'+(editAllMode?'No studies':'All shots labeled')+'</span>';return;}
+    if(!labelTarget||list.indexOf(labelTarget)<0)labelTarget=list[0];
+    c0.innerHTML=list.map(s=>{const idx=arec.studies.indexOf(s);return `<div class="lblBox ${s===labelTarget?'sel':''}" onclick="selectLabel(${idx})" title="Tap this shot, then tap its body section"><img src="${RADIO}" onerror="radioFail(this)"/><span class="lblP">${s.unlabeled?'?':s.part}</span></div>`;}).join('');
+    return;}
+  const ks=Object.keys(regionCounts);
+  document.getElementById('chipRow').innerHTML=ks.map(n=>{
+    const c=regionCounts[n];const badge=c>1?`<span class="cnt">${c}</span>`:'';
+    return `<div class="wlBox" data-part="${n}" onclick="selectPart('${n}')" ondblclick="startFrom('${n}')" title="Click to highlight · double-click to start X-ray: ${n}">${badge}${regionIcons[n]||''}<span class="lbl">${n}</span></div>`;
+  }).join('');}
+let examTarget=null,worklistMode=false,quickMode=false,assignMode=false,pendingShot=null,editingRec=null,labelTarget=null,editAllMode=false;
+/* find/create the record for the patient currently in the Task Manager form */
+function currentRecord(){
+  const g=id=>document.getElementById(id);
+  const nm=(g('ptName')&&g('ptName').value.trim())||(typeof selectedSpeciesName!=='undefined'?selectedSpeciesName:'')||'Patient';
+  const sxd=document.querySelector('#ptFields .row3 .seg2 .sel');
+  const sex=(sxd&&sxd.textContent==='F')?'Female':'Male';
+  // editing an existing record (came from Library +): rename / update it in place
+  if(editingRec){
+    editingRec.name=nm;
+    if(selectedSpecies)editingRec.species=selectedSpecies;
+    if(g('ptBreed')&&g('ptBreed').value)editingRec.breed=g('ptBreed').value;
+    if(g('ptOwner')&&g('ptOwner').value)editingRec.owner=g('ptOwner').value;
+    if(g('ptDob')&&g('ptDob').value)editingRec.dob=g('ptDob').value;
+    if(sxd)editingRec.sex=sex;
+    return editingRec;
+  }
+  let rec=records.find(r=>r.name===nm);
+  if(!rec){rec={name:nm,species:selectedSpecies,breed:(g('ptBreed')&&g('ptBreed').value)||'—',sex:sex,dob:(g('ptDob')&&g('ptDob').value)||'—',owner:(g('ptOwner')&&g('ptOwner').value)||'—',weight:'—',studies:[]};
+    records.unshift(rec);}
+  return rec;
+}
+/* turn the built worklist into pending (empty) studies dated today in the Library */
+function commitWorklist(rec){
+  const date=new Date().toISOString().slice(0,10);
+  rec.studies=rec.studies.filter(s=>!s.pending);
+  Object.keys(regionCounts).forEach(p=>{for(let n=0;n<regionCounts[p];n++)rec.studies.unshift({part:p,date:date,time:nowHM(),pending:true});});
+}
+/* Task Manager [X] = create the worklist, then show it in the Library as pending boxes */
+function startExam(){const ks=Object.keys(regionCounts);if(!ks.length){showToast('Add a body part to the worklist first');return;}
+  quickMode=false;assignMode=false;editAllMode=false;
+  const rec=currentRecord();commitWorklist(rec);libSel=records.indexOf(rec);renderLibList();
+  examTarget=(activeRegion&&regionCounts[activeRegion])?activeRegion:ks[0];worklistMode=true;
+  showToast("Worklist created · "+rec.name);go('exposure');}
+/* double-click a Task Manager worklist box = commit + start exposing that part now */
+function startFrom(n){const rec=currentRecord();commitWorklist(rec);libSel=records.indexOf(rec);examTarget=n;worklistMode=true;go('exposure');}
+/* enter Exposure directly from Quick X — no worklist, just shoot */
+/* Quick X: shoot immediately with a generic Q-patient; identify the part/info afterwards */
+function quickX(){
+  worklistMode=false;quickMode=true;assignMode=false;pendingShot=null;editingRec=null;
+  const seq=String(Math.floor(1000+Math.random()*9000));
+  const set=(id,v)=>{const e=document.getElementById(id);if(e)e.value=v;};
+  set('ptName','Q'+seq);set('ntSpecies','');set('ptBreed','');set('ptOwner','');set('ptDob','');
+  const age=document.getElementById('ptAge');if(age)age.value='—';
+  const idf=document.querySelector('#ptFields .idField');if(idf)idf.value='Q-2026-'+seq;
+  selectedSpecies='';selectedSpeciesName='';
+  Object.keys(regionCounts).forEach(k=>delete regionCounts[k]);activeRegion=null;examTarget=null;
+  go('exposure');
+}
+/* each Quick X shot (radiograph + auto photo) is packed as an UNLABELED study in the Q-patient */
+function quickAddShot(){
+  const rec=currentRecord();
+  rec.studies.unshift({part:'Unlabeled',unlabeled:true,view:'—',date:new Date().toISOString().slice(0,10),time:nowHM(),kv:kv,mas:masValues[masIdx],photo:exPhotoTaken||true,video:exVideoTaken});
+  libSel=records.indexOf(rec);exPhotoTaken=false;exVideoTaken=false;return rec;
+}
+/* "Enter Info" = save the current shot too, then go label the whole batch in Task Manager */
+function enterInfo(){ quickAddShot(); startLabeling(); }
+function startLabeling(){
+  assignMode=true;editAllMode=false;labelTarget=null;ptLocked=true;if(typeof renderLock==='function')renderLock();
+  if(typeof renderChips==='function')renderChips();
+  go('newtask');
+  showToast('Tap a shot, then tap its body section');
+}
+function startLabelingFromLib(){ startLabeling(); }
+/* pick which unlabeled shot to label */
+function selectLabel(idx){labelTarget=(records[libSel]||{}).studies[idx]||null;if(typeof renderChips==='function')renderChips();}
+/* tap a body section to label the selected (or first) unlabeled shot */
+/* copy the Task Manager form (name + info) onto a record, so renames reach the Library */
+function syncFormTo(rec){
+  if(!rec)return;const g=id=>document.getElementById(id);
+  const nm=g('ptName')&&g('ptName').value.trim();if(nm)rec.name=nm;
+  if(selectedSpecies)rec.species=selectedSpecies;
+  if(g('ptBreed')&&g('ptBreed').value)rec.breed=g('ptBreed').value;
+  if(g('ptOwner')&&g('ptOwner').value)rec.owner=g('ptOwner').value;
+  if(g('ptDob')&&g('ptDob').value)rec.dob=g('ptDob').value;
+  const sxd=document.querySelector('#ptFields .row3 .seg2 .sel');if(sxd)rec.sex=(sxd.textContent==='F')?'Female':'Male';
+}
+function assignShot(part){
+  const rec=records[libSel]; if(!rec){assignMode=false;return;}
+  syncFormTo(rec);
+  if(editAllMode){
+    if(labelTarget){labelTarget.part=part;labelTarget.unlabeled=false;if(!labelTarget.view||labelTarget.view==='—')labelTarget.view='Lateral';}
+    if(typeof renderChips==='function')renderChips();
+    if(typeof renderLibList==='function')renderLibList();
+    showToast('Set to '+part);
+    return;
+  }
+  let shot=(labelTarget&&labelTarget.unlabeled)?labelTarget:rec.studies.find(s=>s.unlabeled);
+  if(shot){shot.part=part;shot.unlabeled=false;shot.view='Lateral';}
+  labelTarget=rec.studies.find(s=>s.unlabeled)||null;
+  if(typeof renderChips==='function')renderChips();
+  if(typeof renderLibList==='function')renderLibList();
+  if(labelTarget){showToast('Labeled '+part+' · pick the next shot, then its section');}
+  else{assignMode=false;quickMode=false;showToast('All shots labeled · saved to Library');go('library');}
+}
+/* double-click a pending box in the Library = start X-ray for that part */
+function startFromLibrary(part){const r=records[libSel];if(!r)return;
+  quickMode=false;assignMode=false;editAllMode=false;
+  Object.keys(regionCounts).forEach(k=>delete regionCounts[k]);
+  r.studies.forEach(s=>{if(s.pending)regionCounts[s.part]=(regionCounts[s.part]||0)+1;});
+  const e=document.getElementById('ptName');if(e)e.value=r.name;
+  selectedSpecies=r.species;selectedSpeciesName=(speciesDisp[r.species]||r.species);
+  examTarget=(part&&regionCounts[part])?part:Object.keys(regionCounts)[0];worklistMode=true;go('exposure');}
+let libSelectedPart='';
+/* single-click a pending box to select it; the Library [X] button then starts that part (= double-click) */
+function selectPendingBox(box,part){libSelectedPart=part;document.querySelectorAll('.libStudies .stCard.pending').forEach(b=>b.classList.toggle('sel',b===box));}
+function startWorklistFromLib(){const r=records[libSel];
+  let p=(libSelectedPart&&r.studies.some(s=>s.pending&&s.part===libSelectedPart))?libSelectedPart:(r.studies.find(s=>s.pending)||{}).part;
+  if(p)startFromLibrary(p);}
+/* tap a part in the on-image worklist column = aim at that part */
+function aimPart(n){examTarget=n;renderExpoWorklist();}
+function renderExpoWorklist(){const cont=document.getElementById('expoWorklist'),tl=document.getElementById('expoTarget');if(!cont)return;
+  if(!worklistMode){cont.style.display='none';cont.innerHTML='';if(tl)tl.textContent='';return;}
+  cont.style.display='flex';
+  const ks=Object.keys(regionCounts);
+  if(!examTarget||!regionCounts[examTarget])examTarget=ks[0]||null;
+  cont.innerHTML=ks.map(n=>{const c=regionCounts[n];const badge=c>1?`<span class="cnt">${c}</span>`:'';
+    return `<div class="ewBtn ${n===examTarget?'active':''}" onclick="aimPart('${n}')" title="Aim: ${n}">${badge}${regionIcons[n]||''}</div>`;}).join('');
+  if(tl)tl.textContent=examTarget?('Target · '+examTarget):'';}
+/* flip the animal left/right to choose which side to image */
+function bodyFlip(){bodyFlipped=!bodyFlipped;
+  document.getElementById('animalBody').classList.toggle('flipped',bodyFlipped);
+  document.getElementById('flipBtn').classList.toggle('on',bodyFlipped);}
+let ntN=1;function ntCount(d){ntN=Math.max(1,Math.min(20,ntN+d));document.getElementById('ntNum').textContent=ntN;}
+let ptLocked=false;
+function renderLock(){
+  const F=document.getElementById('ptFields'),b=document.getElementById('lockBtn'),st=document.getElementById('lockStatus');
+  F.classList.toggle('locked',ptLocked);
+  const closed='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>';
+  const open='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 7-1.2"/></svg>';
+  if(st){st.className='lockStatus '+(ptLocked?'locked':'unlocked');st.innerHTML=(ptLocked?closed:open);}
+  if(b)b.textContent=ptLocked?'Unlock':'Save & Lock';
+  const grid=document.getElementById('animalGrid'),body=document.getElementById('animalBody'),
+        gl=document.getElementById('gridLbl'),bc=document.getElementById('bodyControls');
+  if(grid&&body){
+    grid.style.display=ptLocked?'none':'grid';
+    body.classList.toggle('show',ptLocked);
+    if(gl){gl.style.display='flex';const t=document.getElementById('ntImgTitle');if(t)t.textContent=ptLocked?('Region · '+(selectedSpeciesName||'')):'Select species';}
+    if(bc)bc.classList.toggle('show',ptLocked);
+  }
+}
+function ntLockToggle(){ if(ptLocked){ptLocked=false;renderLock();} else {document.getElementById('ntModal').classList.add('show');} }
+function ntConfirm(){ document.getElementById('ntModal').classList.remove('show');ptLocked=true;renderLock(); }
+function ntCancel(){ document.getElementById('ntModal').classList.remove('show'); }
+function ptAgeCalc(){ const y=parseInt(document.getElementById('ptDob').value,10);document.getElementById('ptAge').value=(y>1900&&y<=2026)?(2026-y)+' y':'—'; }
+function go(s){
+  if(s!==curScreen){prevScreen=curScreen;curScreen=s;}
+  document.querySelectorAll('.screen').forEach(e=>e.classList.toggle('active',e.id==='screen-'+s));
+  document.querySelectorAll('.navBtn').forEach(e=>e.classList.toggle('active',e.dataset.s===s));
+  document.getElementById('pageTitle').textContent=titles[s];
+  if(s==='image'){if(typeof applyReviewMode==='function')applyReviewMode();if(typeof updateImageInfo==='function')updateImageInfo();}
+  if(s==='exposure'){if(typeof resetCaptures==='function')resetCaptures();if(typeof renderExpoWorklist==='function')renderExpoWorklist();}
+  if(s==='library'&&typeof renderLibDetail==='function')renderLibDetail();
+}
+/* left tool column handlers */
+let ledOn=false,fieldOn=true;
+/* 1) LED field light: toggle source LED + show the illuminated-area box on the display */
+function exLed(){ledOn=!ledOn;document.getElementById('exLedBtn').classList.toggle('active',ledOn);
+  document.getElementById('ledBox').style.display=ledOn?'block':'none';
+  bann('LED field light '+(ledOn?'ON':'OFF'),true);setTimeout(()=>banner.style.display='none',1300);}
+/* 2) 3D Scan: trigger XCam 3D measurement of the FPD distance & spatial position */
+function exMeasure(){const b=document.getElementById('exMeasBtn');b.classList.add('active');
+  bann('Scanning FPD distance & position…',true);
+  setTimeout(()=>{document.getElementById('ovlSod').textContent='SOD 1042 mm';document.getElementById('ovlSid').textContent='SID 1100 mm';
+    document.getElementById('ovlTh').textContent='Tilt 1.2°';bann('FPD position locked',false);
+    setTimeout(()=>{banner.style.display='none';b.classList.remove('active');},1500);},1700);}
+/* 3) Field: toggle the X-ray collimator field box */
+function exField(){fieldOn=!fieldOn;document.getElementById('exFieldBtn').classList.toggle('active',fieldOn);
+  document.getElementById('colm').style.display=fieldOn?'block':'none';}
+/* Photo + Video captures, packed with the study when it's saved */
+let exPhotoTaken=false,exVideoRecording=false,exVideoTaken=false;
+function exPhoto(){exPhotoTaken=true;
+  const f=document.getElementById('flash');if(f){f.style.opacity='.85';setTimeout(()=>f.style.opacity='0',150);}
+  const b=document.getElementById('exPhotoBtn');if(b){b.classList.add('active');setTimeout(()=>b.classList.remove('active'),450);}
+  bann('Photo captured',false);setTimeout(()=>banner.style.display='none',1200);}
+function exVideo(){const b=document.getElementById('exVideoBtn'),r=document.getElementById('exRec');
+  exVideoRecording=!exVideoRecording;
+  if(exVideoRecording){b.classList.add('rec');if(r)r.style.display='flex';bann('Recording video…',true);}
+  else{b.classList.remove('rec');exVideoTaken=true;if(r)r.style.display='none';bann('Video saved',false);setTimeout(()=>banner.style.display='none',1200);}}
+function resetCaptures(){exPhotoTaken=false;exVideoTaken=false;exVideoRecording=false;
+  const v=document.getElementById('exVideoBtn');if(v)v.classList.remove('rec');
+  const r=document.getElementById('exRec');if(r)r.style.display='none';}
+/* fall back to the SVG silhouette if the online radiograph can't load (e.g. offline) */
+function radioFail(img){img.style.display='none';const fb=img.parentElement.querySelector('svg');if(fb)fb.style.display='block';}
+function showToast(m){const t=document.getElementById('toast');t.textContent=m;t.style.display='block';clearTimeout(t._h);t._h=setTimeout(()=>t.style.display='none',1900);}
+function doSync(){showToast('Syncing records to server…');setTimeout(()=>showToast('Library up to date'),1500);}
+function doService(){showToast('Service mode — technician login required');}
+
+/* ---- exposure ---- */
+let kv=60,mode=1,detector=true;
+const masValues=[1.0,1.6,2.0,2.5,3.2,4.0,5.0,6.3,8.0,10,12.5,16,20,25];let masIdx=masValues.indexOf(6.3);
+function maxMasByKv(k){return (k>=40&&k<=60)?13:(k>=61&&k<=90)?8:1e9;}
+function render(){
+  kvVal.textContent=kv;const daec=mode===0;masBox.style.opacity=daec?0.45:1;
+  let mas=masValues[masIdx];const cap=maxMasByKv(kv);while(mas>cap+1e-9&&masIdx>0){masIdx--;mas=masValues[masIdx];}
+  masVal.textContent=daec?'--':mas.toFixed(mas<10?1:0);
+  ovlMode.textContent=['DAEC','Manual mAs','mA · ms'][mode];
+  ovlParams.textContent=kv+' kV · '+(daec?'AEC':mas.toFixed(mas<10?1:0)+' mAs');
+  detDot.className='dot'+(detector?' on':'');
+  expBtn.classList.toggle('idle',!detector);expBtn.textContent=detector?'Expose':'No detector';
+}
+function stepKv(d){kv=Math.max(40,Math.min(90,kv+d));render();}
+function stepMas(d){if(mode===0)return;masIdx=Math.max(0,Math.min(masValues.length-1,masIdx+d));render();}
+modeBar.addEventListener('click',e=>{const t=e.target.closest('[data-m]');if(!t)return;mode=+t.dataset.m;[...modeBar.children].forEach(c=>c.classList.toggle('sel',c===t));render();});
+presets.addEventListener('click',e=>{const t=e.target.closest('[data-p]');if(!t)return;[...presets.children].forEach(c=>c.classList.toggle('sel',c===t));const p=+t.dataset.p,pk=[60,66,70,55][p-1],pm=[6.3,8.0,4.0,10][p-1];kv=pk;masIdx=masValues.indexOf(pm);render();});
+let busy=false;
+function setRing(t,s,f){ringTxt.textContent=t;ringSub.textContent=s;ringFg.style.strokeDashoffset=534*(1-f);}
+function bann(t,w){banner.textContent=t;banner.className=w?'warn':'';banner.style.display='block';}
+function doExpose(){if(busy)return;reviewMode='acquire';exPhotoTaken=true;if(!detector){bann('Detector not connected',true);setTimeout(()=>banner.style.display='none',1500);return;}
+  busy=true;setRing('Prepare','hold steady',.15);bann('Preparing…',true);
+  setTimeout(()=>{setRing('Exposing','X-ray on',1);bann('Exposure in progress',false);flash.style.opacity='.85';setTimeout(()=>flash.style.opacity='0',150);},900);
+  setTimeout(()=>{setRing('Done','image ready',1);bann('Acquisition complete',false);},2100);
+  setTimeout(()=>{bann('Post-processing…',false);},2100);
+  setTimeout(()=>{setRing('Ready','tap expose',0);banner.style.display='none';busy=false;go('image');},3200);}
+
+/* ---- database ---- */
+const data=[
+  {name:'Bobby',part:'Chest',date:'2026-06-27',size:'M',sp:'Canine',st:2},
+  {name:'Luna',part:'Pelvis',date:'2026-06-27',size:'S',sp:'Feline',st:0},
+  {name:'Max',part:'Forelimb',date:'2026-06-26',size:'L',sp:'Canine',st:2},
+  {name:'Milo',part:'Skull',date:'2026-06-26',size:'S',sp:'Feline',st:0},
+  {name:'Daisy',part:'Abdomen',date:'2026-06-25',size:'M',sp:'Canine',st:3},
+  {name:'Rocky',part:'Spine',date:'2026-06-25',size:'XL',sp:'Canine',st:2},
+  {name:'Coco',part:'Thorax',date:'2026-06-24',size:'S',sp:'Avian',st:0},
+  {name:'Bella',part:'Hindlimb',date:'2026-06-24',size:'M',sp:'Feline',st:2},
+];
+let dbTab='worklist',sortMode=0;const sorts=['newest','oldest','name'];
+dbTabs.addEventListener('click',e=>{const t=e.target.closest('[data-t]');if(!t)return;dbTab=t.dataset.t;[...dbTabs.children].forEach(c=>c.classList.toggle('sel',c===t));renderCards();});
+function cycleSort(){sortMode=(sortMode+1)%3;sortLbl.textContent='Sort: '+sorts[sortMode];renderCards();}
+function renderCards(){
+  const q=dbSearch.value.toLowerCase();
+  let rows=data.filter(d=>{
+    const pend=d.st===0||d.st===1;
+    if(dbTab==='worklist'&&!pend)return false;
+    if(dbTab==='history'&&pend)return false;
+    return (d.name+d.part+d.sp).toLowerCase().includes(q);
+  });
+  if(sortMode===1)rows=rows.slice().reverse();
+  if(sortMode===2)rows=rows.slice().sort((a,b)=>a.name.localeCompare(b.name));
+  dbGrid.innerHTML=rows.map(d=>{
+    const done=d.st!==0&&d.st!==1;
+    return `<div class="dcard" onclick="go('image')">
+      <div class="dthumb"><svg viewBox="0 0 24 24" fill="none" stroke="#9fb0b8" stroke-width="1.2"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M9 7h6M9 11h6M9 15h4"/></svg></div>
+      <div class="dinfo"><b>${d.name}</b><small>${d.part} · ${d.date}</small><small>${d.size} · ${d.sp}</small>
+      <span class="statusPill ${done?'s-done':'s-pending'}">${done?'Acquired':'Pending'}</span></div></div>`;
+  }).join('')||'<div style="color:var(--text2);padding:2cqh">No studies.</div>';
+}
+
+/* ---- image detail ---- */
+let detInv=false,detRot=0;
+function updWWWL(){wwv.textContent=ww.value;wlv.textContent=wl.value;detWWWL.textContent='WW '+ww.value+' · WL '+wl.value;
+  const b=Math.max(.4,Math.min(1.6,1+(2000-wl.value)/4000));const c=Math.max(.6,ww.value/1500);
+  document.getElementById('xray2').style.filter=`brightness(${b}) contrast(${c})`+(detInv?' invert(1)':'');}
+function detInvert(){detInv=!detInv;bInv.classList.toggle('green',detInv);updWWWL();}
+function detRotate(){detRot=(detRot+90)%360;document.getElementById('xray2').style.transform=`translate(-50%,-50%) rotate(${detRot}deg)`;}
+function toggleClass(b){b.classList.toggle('green');}
+/* fill the on-image info bar from the current patient + exposure context */
+function updateImageInfo(){
+  const g=i=>document.getElementById(i);
+  if(reviewMode==='browse'){
+    const r=records[libSel]||{},s=(r.studies&&r.studies[browseIdx])||{};
+    const yr=parseInt((r.dob||'').slice(0,4),10);
+    if(g('iiName'))g('iiName').textContent=r.name||'—';
+    if(g('iiId'))g('iiId').textContent='—';
+    if(g('iiSpecies'))g('iiSpecies').textContent=r.species||'—';
+    if(g('iiSex'))g('iiSex').textContent=r.sex||'—';
+    if(g('iiAge'))g('iiAge').textContent=(yr>1900?(2026-yr)+' y':'—');
+    if(g('iiPart'))g('iiPart').textContent=s.part||'—';
+    if(g('iiKv'))g('iiKv').textContent=(s.kv!=null?s.kv:'—');
+    if(g('iiMas'))g('iiMas').textContent=(s.mas!=null?s.mas.toFixed(s.mas<10?1:0):'—');
+    return;
+  }
+  const nm=(g('ptName')&&g('ptName').value.trim())||(typeof selectedSpeciesName!=='undefined'?selectedSpeciesName:'')||'Patient';
+  const idv=(document.querySelector('#ptFields .idField')&&document.querySelector('#ptFields .idField').value)||'—';
+  const sexDiv=document.querySelector('#ptFields .row3 .seg2 .sel');
+  const sex=sexDiv?(sexDiv.textContent==='M'?'Male':sexDiv.textContent==='F'?'Female':sexDiv.textContent):'—';
+  const age=(g('ptAge')&&g('ptAge').value)||'—';
+  const part=(typeof examTarget!=='undefined'&&examTarget)||(typeof activeRegion!=='undefined'&&activeRegion)||Object.keys(regionCounts||{})[0]||'—';
+  const mas=(typeof masValues!=='undefined')?(masValues[masIdx]||0):0;
+  if(g('iiName'))g('iiName').textContent=nm;
+  if(g('iiId'))g('iiId').textContent=idv;
+  if(g('iiSpecies'))g('iiSpecies').textContent=(typeof selectedSpecies!=='undefined'?selectedSpecies:'—');
+  if(g('iiSex'))g('iiSex').textContent=sex;
+  if(g('iiAge'))g('iiAge').textContent=age;
+  if(g('iiPart'))g('iiPart').textContent=part;
+  if(g('iiKv'))g('iiKv').textContent=(typeof kv!=='undefined'?kv:'—');
+  if(g('iiMas'))g('iiMas').textContent=mas.toFixed(mas<10?1:0);
+}
+/* Save = accept the image: store it, then in worklist mode decrement the targeted part and
+   continue (Exposure if items remain, Library when the worklist is finished). */
+function detSave(){
+  if(quickMode){quickAddShot();renderLibList();showToast('Shot saved (unlabeled) · take next, or Enter Info to label');go('exposure');return;}
+  const nm=(document.getElementById('ptName')&&document.getElementById('ptName').value.trim())||(typeof selectedSpeciesName!=='undefined'?selectedSpeciesName:'')||'Patient';
+  saveStudyToLibrary(nm);quickMode=false;
+  if(worklistMode){
+    if(examTarget&&regionCounts[examTarget]){regionCounts[examTarget]--;if(regionCounts[examTarget]<=0)delete regionCounts[examTarget];}
+    const ks=Object.keys(regionCounts);
+    if(ks.length>0){examTarget=ks[0];showToast('Saved · next: '+examTarget);go('exposure');}
+    else{worklistMode=false;showToast('Worklist complete · saved to Library');go('library');}
+  } else { showToast('Saved to Library · '+nm); go('library'); }
+}
+/* Back from review = save the acquired radiograph + photo to the Library (linked to the
+   animal info & worklist item), then return to the Expose page (default action). */
+function saveStudyToLibrary(name){
+  const date=new Date().toISOString().slice(0,10);
+  const part=(typeof examTarget!=='undefined'&&examTarget)||Object.keys(regionCounts)[0]||'Chest';
+  let rec=records.find(r=>r.name===name);
+  if(!rec){rec={name:name,species:selectedSpecies,breed:'—',sex:'—',dob:'—',owner:'—',weight:'—',studies:[]};records.unshift(rec);}
+  const pend=rec.studies.find(s=>s.pending&&s.part===part);
+  if(pend){pend.pending=false;pend.view='Lateral';pend.date=date;pend.time=nowHM();pend.kv=kv;pend.mas=masValues[masIdx];pend.photo=exPhotoTaken;pend.video=exVideoTaken;}
+  else rec.studies.unshift({part:part,view:'Lateral',date:date,time:nowHM(),kv:kv,mas:masValues[masIdx],photo:exPhotoTaken,video:exVideoTaken});
+  exPhotoTaken=false;exVideoTaken=false;
+  libSel=records.indexOf(rec);renderLibList();renderLibDetail();
+}
+/* Back = return to whichever page the review was opened from */
+function reviewBack(){ go(prevScreen||'exposure'); }
+function buildHist(){let h='';for(let i=0;i<48;i++){const v=Math.sin(i/7)*40+50+Math.random()*10;h+=`<i style="height:${Math.max(6,v)}%"></i>`;}document.getElementById('hist').innerHTML=h;}
+
+/* ---- settings ---- */
+const setData={
+  system:[['Language','English'],['Data save path','/Server/SavedFilm'],['Laser light remain','1000 ms'],['Position duration','10000 ms'],['Use motor demo','sw:0']],
+  generator:[['Exposure technique','AEC'],['Focus','Large'],['Bucky','On'],['kV range','40–90'],['mAs cap (40–60kV)','13']],
+  detector:[['Active detector','AIR.3 #1'],['Gain level','5'],['Dark calibration','run'],['Gain calibration','run'],['Overheat guard','sw:1']],
+  camera:[['AI assist','sw:1'],['Preview FPS','15'],['Rotate default','0°'],['Measure mode','sw:0']],
+  collimator:[['Field light timeout','1000 ms'],['Blade auto-follow','sw:1'],['Filter','None']],
+  general:[['Theme','seg:Light|Dark'],['Sound','sw:1'],['Auto logout','5 min'],['Units','mm']],
+  bluetooth:[['Remote shutter','sw:1'],['BER test','ber'],['Send interval','50 ms']]
+};
+let setCat='system';
+document.getElementById('setCats').addEventListener('click',e=>{const c=e.target.closest('[data-c]');if(!c)return;setCat=c.dataset.c;
+  document.querySelectorAll('.setCat').forEach(x=>x.classList.toggle('sel',x===c));renderSettings();});
+function renderSettings(){
+  const rows=setData[setCat].map(([k,v])=>{
+    let ctrl;
+    if(v==='run')ctrl='<button class="btn">Run</button>';
+    else if(v==='ber')ctrl='<button class="btn green" onclick="berTest(this)">Start test</button>';
+    else if(v.startsWith('sw:'))ctrl=`<div class="sw ${v==='sw:1'?'on':''}" onclick="this.classList.toggle('on')"></div>`;
+    else if(v.startsWith('seg:')){const o=v.slice(4).split('|');ctrl='<div class="seg">'+o.map((x,i)=>`<div class="${(i===1)===document.body.classList.contains('light')?'':'sel'}" onclick="setTheme('${x}',this)">${x}</div>`).join('')+'</div>';}
+    else ctrl=`<span class="v">${v}</span>`;
+    return `<div class="setRow"><span>${k}</span>${ctrl}</div>`;
+  }).join('');
+  document.getElementById('setBody').innerHTML=`<h2>${setCat[0].toUpperCase()+setCat.slice(1)}</h2>${rows}`;
+}
+function setTheme(t,el){document.body.classList.toggle('light',t==='Light');[...el.parentNode.children].forEach(c=>c.classList.toggle('sel',c===el));}
+function berTest(b){let n=0;b.textContent='Testing…';const id=setInterval(()=>{n++;b.textContent='Sent '+n*32+' · BER 0.0%';if(n>=6){clearInterval(id);b.textContent='Start test';}},400);}
+
+/* ---- library (records / workflow) ---- */
+const RADIO='Hand.png';
+const pawSvg='<svg viewBox="0 0 24 24" fill="currentColor"><circle cx="6" cy="11" r="2"/><circle cx="10" cy="7" r="2"/><circle cx="14" cy="7" r="2"/><circle cx="18" cy="11" r="2"/><path d="M12 12c-2.8 0-5 2.2-5 4.3 0 1.6 1.7 2.2 5 2.2s5-.6 5-2.2C17 14.2 14.8 12 12 12z"/></svg>';
+const filmFb='<svg style="display:none" viewBox="0 0 24 24" fill="none" stroke="#9fb0b8" stroke-width="1.2"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M9 7h6M9 11h6M9 15h4"/></svg>';
+const camSvg='<svg viewBox="0 0 24 24" fill="none" stroke="var(--sel)" stroke-width="1.4"><rect x="3" y="7" width="18" height="13" rx="2"/><circle cx="12" cy="13.5" r="3.5"/><path d="M8 7l1.5-2h5L16 7"/></svg>';
+const playSvg='<svg viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="1.4"><circle cx="12" cy="12" r="9"/><path d="M10 8.5l5 3.5-5 3.5z" fill="var(--accent)" stroke="none"/></svg>';
+const nowHM=()=>{const d=new Date(),p=n=>String(n).padStart(2,'0');return p(d.getHours())+':'+p(d.getMinutes());};
+const records=[
+  {name:'Bobby',species:'Canine',breed:'Labrador',sex:'Male',dob:'2021-03-12',owner:'J. Smith',weight:'28 kg',
+   studies:[{part:'Chest',view:'Lateral',date:'2026-06-27',time:'14:12',kv:66,mas:6.3,photo:true,video:true},{part:'Chest',view:'VD',date:'2026-06-27',time:'14:08',kv:66,mas:6.3,photo:true}]},
+  {name:'Luna',species:'Feline',breed:'Domestic SH',sex:'Female',dob:'2023-01-05',owner:'A. Lee',weight:'4.2 kg',
+   studies:[{part:'Pelvis',view:'VD',date:'2026-06-26',time:'15:40',kv:55,mas:4.0,photo:true}]},
+  {name:'Max',species:'Canine',breed:'Beagle',sex:'Male',dob:'2020-07-21',owner:'R. Gomez',weight:'14 kg',
+   studies:[{part:'Forelimb',view:'Lateral',date:'2026-06-26',time:'11:20',kv:60,mas:5.0,photo:true}]},
+  {name:'Daisy',species:'Canine',breed:'Poodle',sex:'Female',dob:'2019-11-02',owner:'K. Park',weight:'9 kg',
+   studies:[{part:'Abdomen',view:'Lateral',date:'2026-06-25',time:'09:35',kv:70,mas:8.0,photo:true},{part:'Abdomen',view:'VD',date:'2026-06-25',time:'09:30',kv:70,mas:8.0}]},
+  {name:'Coco',species:'Avian',breed:'Cockatiel',sex:'Female',dob:'2024-02-20',owner:'M. Tan',weight:'0.1 kg',
+   studies:[{part:'Whole body',view:'VD',date:'2026-06-24',time:'16:05',kv:45,mas:2.0,photo:true}]},
+];
+let libSel=0,libMode='xray';
+function renderLibList(){
+  document.getElementById('libList').innerHTML=records.map((r,i)=>
+    `<div class="libItem ${i===libSel?'sel':''}" onclick="selectLib(${i})"><div class="libAvatar">${pawSvg}</div>
+      <div><b>${r.name}</b><small>${r.species} · ${r.studies.length} studies</small></div></div>`).join('');
+}
+function selectLib(i){libSel=i;libSelectedPart='';renderLibList();renderLibDetail();}
+/* each acquisition = ONE box holding both the radiograph and the simultaneous photo;
+   per-box data-mode picks which is shown. Single-click toggles the box; double-click opens it. */
+function renderLibDetail(){
+  const r=records[libSel];
+  let lastDate=null;
+  const studies=r.studies.map((s,i)=>{
+    let sep='';if(s.date!==lastDate){sep=`<div class="dateSep"><span>${s.date}${s.time?' · '+s.time:''}</span></div>`;lastDate=s.date;}
+    if(s.pending){
+      return sep+`<div class="stCard pending" onclick="selectPendingBox(this,'${s.part}')" ondblclick="startFromLibrary('${s.part}')" title="Click to select · double-click to X-ray now">
+        <div class="stThumb empty"><span class="emptyTxt">No image yet</span></div>
+        <div class="stInfo"><b>${s.part}</b><small>${s.date}</small><small>Pending</small></div>
+        <div class="modeBtns"><button class="mb na" data-av="0">R</button><button class="mb na" data-av="0">P</button><button class="mb na" data-av="0">V</button></div></div>`;
+    }
+    const cls=s.unlabeled?'stCard unlabeled':'stCard';
+    const dbl=s.unlabeled?'startLabelingFromLib()':('openLibImage('+i+')');
+    return sep+`<div class="${cls}" data-mode="xray" ondblclick="${dbl}" title="${s.unlabeled?'Unlabeled — double-click to label':'Double-click to open'}">
+      <div class="stThumb"><img class="xv" src="${RADIO}" onerror="radioFail(this)"/>${filmFb}<div class="pv">${camSvg}<span>RGB photo</span></div><div class="vv">${playSvg}<span>Video</span></div></div>
+      <div class="stInfo"><b>${s.part}</b><small>${s.view} · ${s.date}</small><small>${s.kv} kV · ${s.mas} mAs</small></div>
+      <div class="modeBtns">
+        <button class="mb" data-m="xray" data-av="1" title="Radiography" onclick="event.stopPropagation();setStudyMode(this,'xray')">R</button>
+        <button class="mb${s.photo?'':' na'}" data-m="photo" data-av="${s.photo?1:0}" title="Photography" onclick="event.stopPropagation();setStudyMode(this,'photo')">P</button>
+        <button class="mb${s.video?'':' na'}" data-m="video" data-av="${s.video?1:0}" title="Video" onclick="event.stopPropagation();setStudyMode(this,'video')">V</button>
+      </div></div>`;
+  }).join('');
+  document.getElementById('libDetail').innerHTML=
+    `<div class="libInfo"><div class="big">${pawSvg}</div><div style="min-width:0"><div class="libName">${r.name}</div>
+      <div class="libMeta"><div><span>Species</span><b>${r.species}</b></div><div><span>Breed</span><b>${r.breed}</b></div>
+      <div><span>Sex</span><b>${r.sex}</b></div><div><span>Date of birth</span><b>${r.dob}</b></div>
+      <div><span>Owner</span><b>${r.owner}</b></div><div><span>Weight</span><b>${r.weight}</b></div>
+      <div><span>Studies</span><b>${r.studies.length}</b></div></div></div></div>
+     <div class="toolLbl" style="font-size:max(12px,1.25cqw)"><span>Studies — radiograph · photo · video</span></div>
+     <div class="libStudies">${studies}</div>`;
+  const xfab=document.getElementById('libStartXray');if(xfab)xfab.style.display=r.studies.some(s=>s.pending)?'flex':'none';
+}
+function setStudyMode(btn,m){if(btn.dataset.av==='0')return;const c=btn.closest('.stCard');if(c)c.dataset.mode=m;}
+/* New visit: open Task Manager pre-filled with this animal, with a fresh empty worklist */
+const speciesDisp={Canine:'Dog',Feline:'Cat',Equine:'Horse',Lagomorph:'Rabbit',Avian:'Bird',Rodent:'Hamster',Reptile:'Reptile',Other:'Other'};
+function newVisit(){
+  const r=records[libSel]; if(!r)return;
+  editingRec=r;  // editing this existing record → renames update it in place
+  const setV=(id,v)=>{const e=document.getElementById(id);if(e)e.value=v;};
+  setV('ptName',r.name); setV('ntSpecies',r.species);
+  setV('ptBreed',(r.breed&&r.breed!=='—')?r.breed:'');
+  setV('ptOwner',(r.owner&&r.owner!=='—')?r.owner:'');
+  setV('ptDob',(r.dob&&r.dob!=='—')?r.dob:'');
+  if(typeof ptAgeCalc==='function')ptAgeCalc();
+  const sx=r.sex==='Female'?'F':'M';
+  document.querySelectorAll('#ptFields .row3 .seg2 div').forEach(d=>d.classList.toggle('sel',d.textContent===sx));
+  selectedSpecies=r.species; selectedSpeciesName=speciesDisp[r.species]||r.species;
+  document.querySelectorAll('#animalGrid .animalCard').forEach(c=>{const b=c.querySelector('b');c.classList.toggle('sel',!!b&&b.textContent===selectedSpeciesName);});
+  // load this animal's existing pending worklist (if any) into the editable worklist
+  Object.keys(regionCounts).forEach(k=>delete regionCounts[k]);
+  r.studies.forEach(s=>{if(s.pending)regionCounts[s.part]=(regionCounts[s.part]||0)+1;});
+  activeRegion=(libSelectedPart&&regionCounts[libSelectedPart])?libSelectedPart:null; examTarget=null; worklistMode=false;
+  if(typeof renderChips==='function')renderChips();
+  ptLocked=true; if(typeof renderLock==='function')renderLock();
+  if(typeof applyWorklistToBody==='function')applyWorklistToBody();
+  showToast("New visit · "+r.name+" — build today's worklist");
+  go('newtask');
+}
+/* reflect the current worklist parts on the big animal body (pink) + active highlight */
+function applyWorklistToBody(){
+  document.querySelectorAll('#animalBody .region').forEach(c=>c.classList.toggle('sel',!!regionCounts[c.dataset.r]));
+  if(typeof refreshActive==='function')refreshActive();
+}
+/* Edit: open Task Manager with ALL studies listed, to re-label parts or fix animal info */
+function editStudies(){
+  const r=records[libSel]; if(!r)return;
+  editingRec=r;
+  const set=(id,v)=>{const e=document.getElementById(id);if(e)e.value=v;};
+  set('ptName',r.name);set('ntSpecies',r.species);
+  set('ptBreed',(r.breed&&r.breed!=='—')?r.breed:'');
+  set('ptOwner',(r.owner&&r.owner!=='—')?r.owner:'');
+  set('ptDob',(r.dob&&r.dob!=='—')?r.dob:'');
+  if(typeof ptAgeCalc==='function')ptAgeCalc();
+  const sx=r.sex==='Female'?'F':'M';
+  document.querySelectorAll('#ptFields .row3 .seg2 div').forEach(d=>d.classList.toggle('sel',d.textContent===sx));
+  selectedSpecies=r.species;selectedSpeciesName=speciesDisp[r.species]||r.species;
+  document.querySelectorAll('#animalGrid .animalCard').forEach(c=>{const b=c.querySelector('b');c.classList.toggle('sel',!!b&&b.textContent===selectedSpeciesName);});
+  Object.keys(regionCounts).forEach(k=>delete regionCounts[k]);
+  assignMode=true;editAllMode=true;labelTarget=null;
+  ptLocked=true;if(typeof renderLock==='function')renderLock();
+  if(typeof renderChips==='function')renderChips();
+  go('newtask');
+  showToast('Tap a study, then tap the correct body section · unlock to fix info');
+}
+/* New (from Home, no info): clear everything and show the animal grid for selection */
+function newTask(){
+  editingRec=null;
+  ['ptName','ptBreed','ptOwner','ptDob'].forEach(id=>{const e=document.getElementById(id);if(e)e.value='';});
+  const age=document.getElementById('ptAge');if(age)age.value='—';
+  const sp=document.getElementById('ntSpecies');if(sp)sp.value='';
+  selectedSpecies='Canine';selectedSpeciesName='Dog';
+  document.querySelectorAll('#animalGrid .animalCard').forEach((c,i)=>c.classList.toggle('sel',i===0));
+  Object.keys(regionCounts).forEach(k=>delete regionCounts[k]);activeRegion=null;examTarget=null;worklistMode=false;
+  if(typeof renderChips==='function')renderChips();
+  ptLocked=false;if(typeof renderLock==='function')renderLock();
+  go('newtask');
+}
+function ntBack(){
+  if(assignMode){syncFormTo(records[libSel]);assignMode=false;editAllMode=false;if(typeof renderLibList==='function')renderLibList();go('library');return;}
+  if(Object.keys(regionCounts).length>0){const rec=currentRecord();commitWorklist(rec);libSel=records.indexOf(rec);renderLibList();go('library');}
+  else go(prevScreen||'home');
+}
+/* image review entered from Library = BROWSE mode: prev/next arrows, Back only, no Save */
+let reviewMode='acquire',browseIdx=0;
+function openLibImage(i){reviewMode='browse';browseIdx=i;go('image');}
+function libPrev(){const n=(records[libSel].studies||[]).length;if(!n)return;browseIdx=(browseIdx-1+n)%n;updateImageInfo();}
+function libNext(){const n=(records[libSel].studies||[]).length;if(!n)return;browseIdx=(browseIdx+1)%n;updateImageInfo();}
+function applyReviewMode(){const browse=reviewMode==='browse';
+  const p=document.getElementById('detPrev'),nx=document.getElementById('detNext'),sv=document.getElementById('detSaveBtn');
+  if(p)p.style.display=browse?'flex':'none';if(nx)nx.style.display=browse?'flex':'none';
+  if(sv)sv.style.display=browse?'none':'';}
+
+/* init */
+buildHist();updWWWL();renderCards();renderSettings();render();selectLib(0);renderLock();go('home');
+
+/* ---- top-edge swipe-down gesture → Home (any page) ---- */
+(function(){
+  const screen=document.getElementById('screen');
+  let sx=0,sy=0,active=false,fromTop=false;
+  function down(x,y){
+    const r=screen.getBoundingClientRect();
+    sx=x;sy=y;active=true;
+    fromTop=(y-r.top) < r.height*0.14;   // gesture must begin in the top edge band
+  }
+  function up(x,y){
+    if(!active)return;active=false;
+    const r=screen.getBoundingClientRect();
+    const dy=y-sy,dx=x-sx;
+    if(fromTop && dy>r.height*0.16 && Math.abs(dy)>Math.abs(dx))   // pulled down into the display area
+      go('home');
+  }
+  screen.addEventListener('pointerdown',e=>down(e.clientX,e.clientY));
+  window.addEventListener('pointerup',e=>up(e.clientX,e.clientY));
+  window.addEventListener('pointercancel',()=>{active=false;});
+})();
+</script>
+</body>
+</html>
